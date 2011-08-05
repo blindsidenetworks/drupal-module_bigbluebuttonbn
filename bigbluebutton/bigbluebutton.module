@@ -29,7 +29,6 @@ Versions:
    
 */
 
-include_once( "bbb_api/bbb_api.php" );
 include_once( "bigbluebutton.admin.inc" );
 
 /**
@@ -80,29 +79,6 @@ function bigbluebutton_permission() {
  * Implements hook_menu().
  */
 function bigbluebutton_menu() {
-	$items['bigbluebutton/join'] = array(
-		'title' => 'Join BigBlueButton',
-		'page callback' => 'drupal_get_form',
-		//'page arguments' => array('bigbluebutton_join_block_form'),
-		'page arguments' => array('bigbluebutton_join_form'),
-		'access callback' => 'user_access',
-		'access arguments' => array('access application form'),		
-		'type' => MENU_SUGGESTED_ITEM
-		);
-
-  	$items['bigbluebutton/joining'] = array(
-    	'title' => 'Joining BigBlueButton',
-    	'page callback' => 'bigbluebutton_joining_link',
-    	'access callback' => 'user_access',
-    	'access arguments' => array('access content joinurl'),
-  	);
-	/*$items['bigbluebutton/joining'] = array(
-		'title' => 'Joining BigBlueButton',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('bigbluebutton_joining_form'),
-		'access callback' => TRUE,
-		);
-	*/
 	$items['admin/config/system/bigbluebutton'] = array(
     	'title'				=> 'BigBlueButton configuration',
 		'description' 		=> 'Set parameters to enable web conferencing system connectivity.',
@@ -182,9 +158,35 @@ function bigbluebutton_menu() {
     		'access arguments' 	=> array('administer site configuration'),
     		'file' 				=> 'bigbluebutton.admin.inc',
   			); */
+
+	$items['bigbluebutton/join'] = array(
+		'title' => 'Join BigBlueButton',
+		'page callback' => 'drupal_get_form',
+		//'page arguments' => array('bigbluebutton_join_block_form'),
+		'page arguments' => array('bigbluebutton_join_form'),
+		'access callback' => 'user_access',
+		'access arguments' => array('access application form'),		
+		'type' => MENU_SUGGESTED_ITEM
+		);
+
+  	$items['bigbluebutton/ping'] = array(
+    	'page callback' => 'bigbluebutton_ping_response',
+		'page arguments' => array(1),
+    	'access callback' => 'user_access',
+    	'access arguments' => array('access content'),
+  	);
+
+  	$items['bigbluebutton/joining'] = array(
+    	'title' => 'Joining BigBlueButton',
+    	'page callback' => 'bigbluebutton_joining_response',
+		'page arguments' => array(1),
+    	'access callback' => 'user_access',
+    	'access arguments' => array('access content'),
+  	);
   
   	return $items;
 }  //  End of bigbluebutton_menu().
+
 
 /**
 * Process annotation settings submission.
@@ -321,9 +323,8 @@ function bigbluebutton_join_block_form_submit($form, &$form_state) {
 		
 	if ( ($bbb_joinURL = bigbluebutton_joinMeetingRoom($meeting_room)) != NULL )
 		if ( $meeting_room['user_password'] == $meeting_room['attendee_pass'] && $meeting_room['wait_for_moderator'] == 1 )
-			//bigbluebutton_waiting_join_form($form, $form_state, $bbb_joinURL);
 			//$form_state['redirect'] = "bigbluebutton/joining"; //?joinurl=".$bbb_joinURL; 
-			$form_state['redirect'] = "bigbluebutton/joining/".$bbb_joinURL; 
+			$form_state['redirect'] = "bigbluebutton/joining/".$meeting_room['meeting_room_name']."/".urlencode($bbb_joinURL); 
 		else
 			$form_state['redirect'] = $bbb_joinURL;
 }
@@ -338,62 +339,88 @@ function bigbluebutton_join_form($form, &$form_state){
 	$salt_val = variable_get('bigbluebutton_server_salt', '');
 
 	$recordingsURL = BigBlueButton::getRecordingsURL('', $url_val, $salt_val );
-	debug($recordingsURL, "recordingsURL", $print_r = TRUE);
+	//debug($recordingsURL, "recordingsURL", $print_r = TRUE);
 
     $recordings = BigBlueButton::getRecordingsArray('', $url_val, $salt_val);
-	debug($recordings, "recordings", $print_r = TRUE);
-	
+	//debug($recordings, "recordings", $print_r = TRUE);
 	
 	return $form;
-
 }
 
-function bigbluebutton_joining_form($form, &$form_state){
-	//adding js to drupal: http://api.drupal.org/api/drupal/includes--common.inc/function/drupal_add_js/6#comment-120
-	$js_heartbeat = drupal_get_path('module', 'bigbluebutton') . '/jquery/heartbeat.js';
-	$js_bbbping = drupal_get_path('module', 'bigbluebutton') . '/jquery/bbbping.js';
-  	drupal_add_js($js_heartbeat);
-  	drupal_add_js($js_bbbping);
-
-	$form['bigbluebutton_x'] = array(
-		'#type' => 'hidden',
-		'#value' => 'Joining',
-		);
-	//$form['bigbluebutton_waiting_img'] = array();	
-
-	return $form;
-
-}
-
-
-function bigbluebutton_join_form_items(){
-
-
-}
-
-function bigbluebutton_joining_link() {
+function bigbluebutton_joining_response($action, $meetingname, $joinurl) {
 	$url_val = variable_get('bigbluebutton_server_url', '');
 	$salt_val = variable_get('bigbluebutton_server_salt', '');
 	
 	global $base_path;
+	global $base_root;
 
 	drupal_add_js('misc/jquery.js');
-  	drupal_add_js('./js/heartbeat.js');
-  	drupal_add_js('./js/bbbping.js');
+  	drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebutton').'/js/heartbeat.js');
   
-  	//drupal_add_js('misc/ajax.js');
-  	//$link = l(t('Say Hello'), 'hello_world_link_callback/nojs/', array('attributes' => array('class' => array('use-ajax'))));
-  	//return '<div>' . $link . '</div><div id="saying-hello"></div>';
+ 	drupal_add_js(array('pingURL' => $base_root.$base_path.'bigbluebutton/ping/'.urlencode($meetingname)), 'setting');
+	$joinurldecoded = urldecode($joinurl);
+	drupal_add_js(array('joinURL' => $joinurldecoded), 'setting');
+	
+	$output = 	"<div align=center>";
+	$output .=	"<br />The virtual class has not yet started. Waiting until a moderator joins<br /><br />";
+	$output .= 	"<center><img src=".$base_path.drupal_get_path('module', 'bigbluebutton')."/polling.gif></center>";
+	$output .= 	"\r";
+	$output .= 	"<script type='application/javascript'>\r";
+	$output .= 	"    //JQuery code STARTS\r";
+	$output .= 	"    $(document).ready(function() {\r";
+	$output .= 	"        $.jheartbeat.set({\r";
+	$output .= 	"            url: Drupal.settings.pingURL,\r";
+	$output .= 	"            delay: 2500\r";
+	$output .= 	"            }, function() {\r";
+	$output .= 	"                mycallback();\r";
+	$output .= 	"                });\r";
+	$output .= 	"            } );\r";
+	$output .= 	"    //JQuery code ENDS\r";
+	$output .= 	"    function mycallback() {\r";
+	$output .= 	"        // Not elegant, but works around a bug in IE8\r";
+	$output .= 	"        var isMeeting = ($('#HeartBeatDIV').text().search('true')  > 0 );\r";
+	$output .= 	"        if ( isMeeting ) {\r";
+	$output .= 	"            window.location = Drupal.settings.joinURL;\r";
+	$output .= 	"        }\r";
+	$output .= 	"    }\r";
+    $output .= 	"</script>\r";  
 
-	drupal_add_js(array('pingURL' => $base_path.drupal_get_path('module', 'bigbluebutton').'/ping.php'), 'setting');
-	drupal_add_js(array('joinURL' => $base_path.drupal_get_path('module', 'bigbluebutton').'/ping.php'), 'setting');
-
-	$joining = 	'<div align="center">';
-	$joining .=	'<br />The virtual class has not yet started. Waiting until a moderator joins<br /><br />';
-	$joining .= '<center><img src='.$base_path.drupal_get_path('module', 'bigbluebutton').'/polling.gif></center>';
-  
-  	return $joining;
+  	return $output;
 }
+
+function bigbluebutton_ping_response($action, $meetingnameencode) {
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+
+    $meetingnamedecoded = urldecode($meetingnameencode);
+	if ( ($meetingid = bigbluebutton_isMeetingCreated( $meetingnamedecoded, $url_val, $salt_val )) == NULL )
+			$meetingid = '';
+
+	return getMeetingXML($meetingid, $url_val, $salt_val);
+}
+
+function getMeetingXML($meetingname, $url_val, $salt_val){
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+
+	drupal_add_http_header('Content-Type', 'application/xml');
+	
+	echo BigBlueButton::getMeetingXML( $meetingname, $url_val, $salt_val );
+}
+
+
+
+
+    	//$output = t("Hello World!");
+    	//$commands = array();
+    	//$commands[] = ajax_command_append('#saying-hello', $output);
+    	//$page = array('#type' => 'ajax_commands', '#ajax_commands' => $commands);
+    	//return drupal_json_output(array('message'=> 'Hello'));
+		
+		//$result = xmlrpc('http://localhost/drupal/xmlrpc.php', array(
+    		//array('system.method', $param1, $param2, $param3),
+		//));
+
 
 
 ?>
