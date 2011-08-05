@@ -38,12 +38,6 @@ function bigbluebutton_schema() {
         		'default' => '',
         		'description' => 'Meeting room name.',
       			),
-      		'meeting_version' => array(
-        		'type' => 'int',
-        		'not null' => TRUE,
-        		'default' => 0,
-        		'description' => 'Meeting timestamp.',
-      			),
       		'attendee_pass' => array(
         		'type' => 'char',
         		'length' => 32,
@@ -85,22 +79,46 @@ function bigbluebutton_install() {
   	db_insert('meeting_room')
 		->fields(array(
       		'meeting_room_name' => 'Demo Meeting',
-			'meeting_version' => time(),
       		'attendee_pass' => 'ap',
       		'moderator_pass' => 'mp',
       		'wait_for_moderator' => 0,
     		))
     	->execute();
+    
+	// Default roles to access meeting rooms
+ 	$roles = array_map('check_plain', user_roles(TRUE));
+
+	if (!array_key_exists('bbb attendee', $roles)) {
+  		$role = (object) array('name' => t('bbb attendee'));
+    	user_role_save($role);
+	}
+	if (!array_key_exists('bbb moderator', $roles)) {
+  		$role = (object) array('name' => t('bbb moderator'));
+    	user_role_save($role);
+	}
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function bigbluebutton_uninstall() {
-  // Remove all Disqus-related variables.
-  db_delete('variable')->condition('name', 'bigbluebutton_%', 'LIKE')->execute();
+  	// Remove all Disqus-related variables.
+  	db_delete('variable')->condition('name', 'bigbluebutton_%', 'LIKE')->execute();
   
-  variable_del('meeting_room');
+  	variable_del('meeting_room');
+  
+	$roles = db_select('role', 'r')
+    	->fields('r', array('rid', 'name', 'weight'))
+    	->orderBy('rid')
+		->execute()
+		->fetchAll();
+
+    foreach( $roles as $role ){
+		if ( $role->name == 'bbb attendee' || $role->name == 'bbb moderator' ){
+  			user_role_delete((int) $role->rid);
+		}
+	}
+  
 }
 
 

@@ -243,45 +243,17 @@ function bigbluebutton_admin_meeting_room_delete_form_submit($form, &$form_state
 }
 
 function bigbluebutton_admin_meeting_room_test($form, &$form_state) {
-	
-	//---------------------------------------------------JOIN-----------------------------------------------
+
     $meeting_room = bigbluebutton_getMeeting_room($form_state['build_info']['args'][0]);
-		
-	$meetingID = $meeting_room['meeting_room_name'];
-	$moderatorPW = $meeting_room['moderator_pass'];
-	$attendeePW = $meeting_room['attendee_pass'];
-	$meetingVersion = $meeting_room['meeting_version'];
-	
-	$url_val = variable_get('bigbluebutton_server_url', '');
-	$salt_val = variable_get('bigbluebutton_server_salt', '');
-	
-	$user_name = $GLOBALS['user']->name;
-	$logoutURL = $GLOBALS['_SERVER']['HTTP_REFERER'];
 
-	//Calls create meeting on the bigbluebutton server
-	$response = BigBlueButton::createMeetingArray($user_name, $meetingID."[".$meetingVersion."]", "", $moderatorPW, $attendeePW, $salt_val, $url_val, $logoutURL );
+	$user = $GLOBALS['user'];
+	$meeting_room['user_name'] = $user->name;
+	$meeting_room['user_password'] = $meeting_room['moderator_pass'];
 
-	$createNew = false;
-	//Analyzes the bigbluebutton server's response
-	if(!$response){//If the server is unreachable, then prompts the user of the necessary action
-  		drupal_set_message(t('Unable to join the meeting room %meeting_room_name. Please check the url of the bigbluebutton server AND check to see if the bigbluebutton server is running.', array('%meeting_room_name' => $meeting_room['meeting_room_name'])));
 
-	} else if( $response['returncode'] == 'FAILED' ) { //The meeting was not created
-		if($response['messageKey'] == 'idNotUnique'){
-			$createNew = true;
-		}
-		else if($response['messageKey'] == 'checksumError'){
-  			drupal_set_message(t('A checksum error occured. Make sure you entered the correct salt.'));
-		}
-		else {
-  			drupal_set_message(t($response['message']));
-		}
-	} else {
-		$bbb_joinURL = BigBlueButton::joinURL($meetingID."[".$meetingVersion."]", $user_name, $moderatorPW, $salt_val, $url_val, $logoutURL );
+	if ( ($bbb_joinURL = bigbluebutton_joinMeetingRoom($meeting_room)) != NULL )
+		//$form_state['redirect'] = $bbb_joinURL;
 		header('Location: '.$bbb_joinURL );
-	}
-	return;
-	//---------------------------------------------------END-------------------------------------------------
 }
 
 function bigbluebutton_getMeeting_room($mid = NULL) {
@@ -296,7 +268,7 @@ function bigbluebutton_getMeeting_room($mid = NULL) {
 	if ( $mid != NULL ) {		
 		$results = db_select('meeting_room', 'm')
 			->condition('mid', $mid)
-    		->fields('m', array('mid', 'meeting_room_name', 'meeting_version', 'attendee_pass', 'moderator_pass', 'wait_for_moderator'))
+    		->fields('m', array('mid', 'meeting_room_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator'))
     		->orderBy('meeting_room_name')
 			->execute()
 			->fetchAll();
@@ -304,7 +276,6 @@ function bigbluebutton_getMeeting_room($mid = NULL) {
 	  			$meeting_room = array(
     			//'mid' => $meeting_room_id,
     			'meeting_room_name' => $results[0]->meeting_room_name,
-    			'meeting_version' => $results[0]->meeting_version,
     			'attendee_pass' => $results[0]->attendee_pass,
     			'moderator_pass' => $results[0]->moderator_pass,
     			'wait_for_moderator' => $results[0]->wait_for_moderator,
@@ -314,5 +285,91 @@ function bigbluebutton_getMeeting_room($mid = NULL) {
 
 	return $meeting_room;
 }
+
+function bigbluebutton_joinMeetingRoom($meeting_room){
+	//---------------------------------------------------JOIN-----------------------------------------------
+	$bbb_joinURL = NULL;
+	
+	$meetingID = $meeting_room['meeting_room_name'];
+	$moderatorPW = $meeting_room['moderator_pass'];
+	$attendeePW = $meeting_room['attendee_pass'];
+	
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+	$logoutURL = $GLOBALS['base_url'];
+
+	$user_name = $meeting_room['user_name'];
+	$user_password = $meeting_room['user_password'];
+
+	//Validate the password
+	if ( $user_password != $moderatorPW && $user_password != $attendeePW ) {
+  		drupal_set_message(t("The password typed doesn't match neither the attendee password nor the moderator password registered."));
+
+	} else {
+		//Calls create meeting on the bigbluebutton server
+		if ( ($realMeetingID = bigbluebutton_isMeetingCreated( $meetingID, $url_val, $salt_val )) == NULL ){
+			$realMeetingID = $meetingID."[".time()."]";
+			$response = BigBlueButton::createMeetingArray($user_name, $realMeetingID, "Welcome to [$meetingID] Meeting Room.", $moderatorPW, $attendeePW, $salt_val, $url_val, $logoutURL );
+		
+			//Analyzes the bigbluebutton server's response
+			if(!$response){//If the server is unreachable, then prompts the user of the necessary action
+  				drupal_set_message(t('Unable to join the meeting room %meeting_room_name. Please check the url of the bigbluebutton server AND check to see if the bigbluebutton server is running.', array('%meeting_room_name' => $meeting_room['meeting_room_name'])));
+				return;
+			} else if( $response['returncode'] == 'FAILED' ) { //The meeting was not created
+				if($response['messageKey'] == 'idNotUnique'){
+					$createNew = true;
+				} else if($response['messageKey'] == 'checksumError'){
+  					drupal_set_message(t('A checksum error occured. Make sure you entered the correct salt.'));
+				} else {
+  					drupal_set_message(t($response['message']));
+				}
+				return;
+			} else
+				$bbb_joinURL = BigBlueButton::joinURL($realMeetingID, $user_name, $user_password, $salt_val, $url_val, $logoutURL );
+		} else  
+			$bbb_joinURL = BigBlueButton::joinURL($realMeetingID, $user_name, $user_password, $salt_val, $url_val, $logoutURL );
+	}
+	//---------------------------------------------------END-------------------------------------------------
+	return $bbb_joinURL;
+}
+
+
+function bigbluebutton_getAllMeetingRooms() {
+
+	$results = db_select('meeting_room', 'm')
+    	->fields('m', array('mid', 'meeting_room_name', 'meeting_version', 'attendee_pass', 'moderator_pass', 'wait_for_moderator'))
+    	->orderBy('meeting_room_name')
+		->execute()
+		->fetchAll();
+
+    foreach( $results as $rowset )
+  	$meeting_room = array(
+    	'meeting_room_name' => $results[0]->meeting_room_name,
+    	'meeting_version' => $results[0]->meeting_version,
+    	'attendee_pass' => $results[0]->attendee_pass,
+    	'moderator_pass' => $results[0]->moderator_pass,
+    	'wait_for_moderator' => $results[0]->wait_for_moderator,
+  		);
+
+	return $meeting_room;
+}
+
+
+function bigbluebutton_isMeetingCreated( $meetingID, $URL, $SALT ) {
+
+	$xml = bbb_wrap_simplexml_load_file( BigBlueButton::getMeetingsURL( $URL, $SALT ) );
+	if( $xml && $xml->returncode == 'SUCCESS' )
+		foreach ($xml->meetings->meeting as $meeting){
+			$meetingName = explode("[", $meeting->meetingID);
+			if ( $meetingName[0] == $meetingID ){
+				if ( $meeting->hasBeenForciblyEnded == 'false' )
+					return $meeting->meetingID;
+			}
+		}
+	return NULL;
+
+}
+
+
 
 ?>

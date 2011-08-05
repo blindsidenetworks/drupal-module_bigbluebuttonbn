@@ -1,6 +1,6 @@
 <?php
 /* 
-Plugin Name: BigBlueButton
+Plugin Name: BigBlueButton BN
 Plugin URI: http://blindsidenetworks.com/integration
 Version: 1.0.0
 Author: Blindside Networks
@@ -29,7 +29,6 @@ Versions:
    
 */
 
-include_once( "bbb_api/bbb_api.php" );
 include_once( "bigbluebutton.admin.inc" );
 
 /**
@@ -62,12 +61,24 @@ function bigbluebutton_help($path, $arg) {
   	}
 }
 
+
+/**
+* Implementation of hook_permission()
+*/
+function bigbluebutton_permission() {
+	return array(
+		'access application form' => array(
+		'title' => t('BigBlueButton form access'),
+		'description' => t('Allow users access the bigbluebutton form'),
+		),
+	);
+}
+
+
 /**
  * Implements hook_menu().
  */
 function bigbluebutton_menu() {
-  	$menu_offset = 4;
-
 	$items['admin/config/system/bigbluebutton'] = array(
     	'title'				=> 'BigBlueButton configuration',
 		'description' 		=> 'Set parameters to enable web conferencing system connectivity.',
@@ -147,9 +158,35 @@ function bigbluebutton_menu() {
     		'access arguments' 	=> array('administer site configuration'),
     		'file' 				=> 'bigbluebutton.admin.inc',
   			); */
+
+	$items['bigbluebutton/join'] = array(
+		'title' => 'Join BigBlueButton',
+		'page callback' => 'drupal_get_form',
+		//'page arguments' => array('bigbluebutton_join_block_form'),
+		'page arguments' => array('bigbluebutton_join_form'),
+		'access callback' => 'user_access',
+		'access arguments' => array('access application form'),		
+		'type' => MENU_SUGGESTED_ITEM
+		);
+
+  	$items['bigbluebutton/ping'] = array(
+    	'page callback' => 'bigbluebutton_ping_response',
+		'page arguments' => array(1),
+    	'access callback' => 'user_access',
+    	'access arguments' => array('access content'),
+  	);
+
+  	$items['bigbluebutton/joining'] = array(
+    	'title' => 'Joining BigBlueButton',
+    	'page callback' => 'bigbluebutton_joining_response',
+		'page arguments' => array(1),
+    	'access callback' => 'user_access',
+    	'access arguments' => array('access content'),
+  	);
   
   	return $items;
 }  //  End of bigbluebutton_menu().
+
 
 /**
 * Process annotation settings submission.
@@ -183,7 +220,8 @@ function bigbluebutton_block_view($delta = '') {
 	switch ($delta) {
 		case 'bigbluebutton':
 			$block['title'] = t('BigBlueButton');
-      		$block['content'] = drupal_render(drupal_get_form('bigbluebutton_join_block_form'));
+			$bigbluebutton_join_block_form = drupal_get_form('bigbluebutton_join_block_form');
+      		$block['content'] = drupal_render($bigbluebutton_join_block_form);
 			return $block;
 			break;
 	}
@@ -201,7 +239,33 @@ function bigbluebutton_join_block_form($form, &$form_state) {
 	foreach ( $meeting_rooms as $meeting_room )
 		$meeting_room_options[$meeting_room->mid] = $meeting_room->meeting_room_name;
 
+	$user = $GLOBALS['user'];
+	//debug($user, "user", $print_r = TRUE);
+	$bigbluebutton_name = "";
+	$bigbluebutton_name_disabled = FALSE;
+	$bigbluebutton_showName = 'true';
+	if ( $user->uid != 0 ){ // is not anonymous user
+		$bigbluebutton_name = $user->name;
+		$bigbluebutton_name_disabled = TRUE;
+		$bigbluebutton_showName = 'false';
+	}
+	
+	$bigbluebutton_password_disabled = FALSE;
+	$bigbluebutton_showPassword = 'true';
+    if ( in_array("bbb attendee", $user->roles) || in_array("bbb moderator", $user->roles) ){
+		$bigbluebutton_password_disabled = TRUE;
+		$bigbluebutton_showPassword = 'false';
+	}
+	
 	//Form definition starts
+	$form['bigbluebutton_meeting_room']['bigbluebutton_showName'] = array(
+		'#type' => 'hidden',
+		'#value' => $bigbluebutton_showName,
+		);		
+	$form['bigbluebutton_meeting_room']['bigbluebutton_showPassword'] = array(
+		'#type' => 'hidden',
+		'#value' => $bigbluebutton_showPassword,
+		);		
 	$form['bigbluebutton_meeting_room']['bigbluebutton_meeting_room_mid'] = array(
 		'#title' => t('Meeting room'),
 		'#type' => 'select',
@@ -210,13 +274,26 @@ function bigbluebutton_join_block_form($form, &$form_state) {
   	$form['bigbluebutton_name'] = array(
     	'#type' => 'textfield',
 		'#title' => t('Name'),
+		'#default_value' => t($bigbluebutton_name),
+		'#disabled' => $bigbluebutton_name_disabled,
     	'#size' => 15,
-  	);
+ 		'#states' => array(
+			'visible' => array(
+				':input[name="bigbluebutton_showName"]' => array('value' => 'true')
+				),
+			),		
+		);
   	$form['bigbluebutton_password'] = array(
     	'#type' => 'password',
 		'#title' => t('Password'),
+		'#disabled' => $bigbluebutton_password_disabled,
     	'#size' => 15,
-  	);
+ 		'#states' => array(
+			'visible' => array(
+				':input[name="bigbluebutton_showPassword"]' => array('value' => 'true')
+				),
+			),		
+		);
   	$form['submit'] = array(
     	'#type' => 'submit',
     	'#value' => 'Join',
@@ -228,73 +305,122 @@ function bigbluebutton_join_block_form($form, &$form_state) {
 //Create the form handler
 function bigbluebutton_join_block_form_submit($form, &$form_state) {
 
-	//---------------------------------------------------JOIN-----------------------------------------------
     $meeting_room = bigbluebutton_getMeeting_room($form_state['input']['bigbluebutton_meeting_room_mid']);
-		
-	$meetingID = $meeting_room['meeting_room_name'];
-	$moderatorPW = $meeting_room['moderator_pass'];
-	$attendeePW = $meeting_room['attendee_pass'];
-	$meetingVersion = $meeting_room['meeting_version'];
 
-//	$user_name = $GLOBALS['user']->name;
-	$user_name = $form_state['input']['bigbluebutton_name'];
-	$user_password = $form_state['input']['bigbluebutton_password'];
-
-	//Validate the password
-	if ( $user_password != $moderatorPW && $user_password != $attendeePW ) {
-  		drupal_set_message(t("The password typed doesn't match neither the attendee password nor the moderator password registered."));
-
-	} else {
-
-		$url_val = variable_get('bigbluebutton_server_url', '');
-		$salt_val = variable_get('bigbluebutton_server_salt', '');
+	$user = $GLOBALS['user'];
+	if ( $user->uid != 0 ) // is not anonymous user
+		$meeting_room['user_name'] = $user->name;
+	else
+		$meeting_room['user_name'] = $form_state['input']['bigbluebutton_name'];
 	
-		$logoutURL = $GLOBALS['_SERVER']['HTTP_REFERER'];
-
-		//Calls create meeting on the bigbluebutton server
-		$response = BigBlueButton::createMeetingArray($user_name, $meetingID."[".$meetingVersion."]", "", $moderatorPW, $attendeePW, $salt_val, $url_val, $logoutURL );
-
-		$createNew = false;
-		//Analyzes the bigbluebutton server's response
-		if(!$response){//If the server is unreachable, then prompts the user of the necessary action
-  			drupal_set_message(t('Unable to join the meeting room %meeting_room_name. Please check the url of the bigbluebutton server AND check to see if the bigbluebutton server is running.', array('%meeting_room_name' => $meeting_room['meeting_room_name'])));
-
-		} else if( $response['returncode'] == 'FAILED' ) { //The meeting was not created
-			if($response['messageKey'] == 'idNotUnique'){
-				$createNew = true;
-			} else if($response['messageKey'] == 'checksumError'){
-  				drupal_set_message(t('A checksum error occured. Make sure you entered the correct salt.'));
-			} else {
-  				drupal_set_message(t($response['message']));
-			}
-		} else {
-			//Everything is ok, let's join the meeting
-			$bbb_joinURL = BigBlueButton::joinURL($meetingID."[".$meetingVersion."]", $user_name, $user_password, $salt_val, $url_val, $logoutURL );
+	//get meeting info
+	if ( in_array("bbb attendee", $user->roles) )
+		$meeting_room['user_password'] = $meeting_room['attendee_pass'];
+	else if ( in_array("bbb moderator", $user->roles) )
+		$meeting_room['user_password'] = $meeting_room['moderator_pass'];
+	else 
+		$meeting_room['user_password'] = $form_state['input']['bigbluebutton_password'];
+		
+	if ( ($bbb_joinURL = bigbluebutton_joinMeetingRoom($meeting_room)) != NULL )
+		if ( $meeting_room['user_password'] == $meeting_room['attendee_pass'] && $meeting_room['wait_for_moderator'] == 1 )
+			//$form_state['redirect'] = "bigbluebutton/joining"; //?joinurl=".$bbb_joinURL; 
+			$form_state['redirect'] = "bigbluebutton/joining/".$meeting_room['meeting_room_name']."/".urlencode($bbb_joinURL); 
+		else
 			$form_state['redirect'] = $bbb_joinURL;
-		}
-	}
-	//---------------------------------------------------END-------------------------------------------------
+}
+
+function bigbluebutton_join_form($form, &$form_state){
+	$form['bigbluebutton_x'] = array(
+		'#type' => 'hidden',
+		'#value' => 'Join',
+		);		
+
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+
+	$recordingsURL = BigBlueButton::getRecordingsURL('', $url_val, $salt_val );
+	//debug($recordingsURL, "recordingsURL", $print_r = TRUE);
+
+    $recordings = BigBlueButton::getRecordingsArray('', $url_val, $salt_val);
+	//debug($recordings, "recordings", $print_r = TRUE);
+	
+	return $form;
+}
+
+function bigbluebutton_joining_response($action, $meetingname, $joinurl) {
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+	
+	global $base_path;
+	global $base_root;
+
+	drupal_add_js('misc/jquery.js');
+  	drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebutton').'/js/heartbeat.js');
+  
+ 	drupal_add_js(array('pingURL' => $base_root.$base_path.'bigbluebutton/ping/'.urlencode($meetingname)), 'setting');
+	$joinurldecoded = urldecode($joinurl);
+	drupal_add_js(array('joinURL' => $joinurldecoded), 'setting');
+	
+	$output = 	"<div align=center>";
+	$output .=	"<br />The virtual class has not yet started. Waiting until a moderator joins<br /><br />";
+	$output .= 	"<center><img src=".$base_path.drupal_get_path('module', 'bigbluebutton')."/polling.gif></center>";
+	$output .= 	"\r";
+	$output .= 	"<script type='application/javascript'>\r";
+	$output .= 	"    //JQuery code STARTS\r";
+	$output .= 	"    $(document).ready(function() {\r";
+	$output .= 	"        $.jheartbeat.set({\r";
+	$output .= 	"            url: Drupal.settings.pingURL,\r";
+	$output .= 	"            delay: 2500\r";
+	$output .= 	"            }, function() {\r";
+	$output .= 	"                mycallback();\r";
+	$output .= 	"                });\r";
+	$output .= 	"            } );\r";
+	$output .= 	"    //JQuery code ENDS\r";
+	$output .= 	"    function mycallback() {\r";
+	$output .= 	"        // Not elegant, but works around a bug in IE8\r";
+	$output .= 	"        var isMeeting = ($('#HeartBeatDIV').text().search('true')  > 0 );\r";
+	$output .= 	"        if ( isMeeting ) {\r";
+	$output .= 	"            window.location = Drupal.settings.joinURL;\r";
+	$output .= 	"        }\r";
+	$output .= 	"    }\r";
+    $output .= 	"</script>\r";  
+
+  	return $output;
+}
+
+function bigbluebutton_ping_response($action, $meetingnameencode) {
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+
+    $meetingnamedecoded = urldecode($meetingnameencode);
+	if ( ($meetingid = bigbluebutton_isMeetingCreated( $meetingnamedecoded, $url_val, $salt_val )) == NULL )
+			$meetingid = '';
+
+	return getMeetingXML($meetingid, $url_val, $salt_val);
+}
+
+function getMeetingXML($meetingname, $url_val, $salt_val){
+	$url_val = variable_get('bigbluebutton_server_url', '');
+	$salt_val = variable_get('bigbluebutton_server_salt', '');
+
+	drupal_add_http_header('Content-Type', 'application/xml');
+	
+	echo BigBlueButton::getMeetingXML( $meetingname, $url_val, $salt_val );
 }
 
 
-function bigbluebutton_getAllMeetingRooms() {
 
-	$results = db_select('meeting_room', 'm')
-    	->fields('m', array('mid', 'meeting_room_name', 'meeting_version', 'attendee_pass', 'moderator_pass', 'wait_for_moderator'))
-    	->orderBy('meeting_room_name')
-		->execute()
-		->fetchAll();
 
-    foreach( $results as $rowset )
-  	$meeting_room = array(
-    	'meeting_room_name' => $results[0]->meeting_room_name,
-    	'meeting_version' => $results[0]->meeting_version,
-    	'attendee_pass' => $results[0]->attendee_pass,
-    	'moderator_pass' => $results[0]->moderator_pass,
-    	'wait_for_moderator' => $results[0]->wait_for_moderator,
-  		);
+    	//$output = t("Hello World!");
+    	//$commands = array();
+    	//$commands[] = ajax_command_append('#saying-hello', $output);
+    	//$page = array('#type' => 'ajax_commands', '#ajax_commands' => $commands);
+    	//return drupal_json_output(array('message'=> 'Hello'));
+		
+		//$result = xmlrpc('http://localhost/drupal/xmlrpc.php', array(
+    		//array('system.method', $param1, $param2, $param3),
+		//));
 
-	return $meeting_room;
-}
+
 
 ?>
