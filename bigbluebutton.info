@@ -9,6 +9,6 @@ files[] = js/heartbeat.js
 files[] = js/jquery.dataTables.js
 files[] = polling.gif
 core = "7.x"
-version = "7.x-1.0.2-dev"
+version = "7.x-1.0.3-dev"
 project = "bigbluebutton"
 configure = admin/config/system/bigbluebutton/settings
