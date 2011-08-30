@@ -1,5 +1,11 @@
 <?php
 /* 
+Plugin Name: BigBlueButton BN
+Plugin URI: http://blindsidenetworks.com/integration
+Author: Blindside Networks
+Author URI: http://blindsidenetworks.com/
+Description: BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebutton.org/support
+
    Copyright 2011 Blindside Networks
 
    This program is free software; you can redistribute it and/or modify
@@ -15,7 +21,13 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+Versions:
+   7.x-1.0.x-dev	--  	Initial version written by Jesus Federico
+                    		(email : jesus [a t ] b l i n d si de n  et w o rks DOT ca)
+   
 */
+require_once('bbb_api/bbb_api.php');
 
 /**
  * Implements hook_schema().
@@ -23,7 +35,7 @@
 function bigbluebutton_schema() {
 
   	$schema['meeting_room'] = array(
-    	'description' => t('Meeting room form settings.'),
+    	'description' => t('Meeting room settings.'),
     	'fields' => array(
       		'mid' => array(
         		'type' => 'serial',
@@ -31,7 +43,14 @@ function bigbluebutton_schema() {
         		'not null' => TRUE,
         		'description' => 'Primary Key: A unique ID for each registred meeting room.',
       			),
-      		'meeting_room_name' => array(
+      		'meeting_id' => array(
+        		'type' => 'char',
+        		'length' => 64,
+        		'not null' => TRUE,
+        		'default' => '',
+        		'description' => 'Meeting room id.',
+      			),
+      		'meeting_name' => array(
         		'type' => 'char',
         		'length' => 64,
         		'not null' => TRUE,
@@ -59,10 +78,52 @@ function bigbluebutton_schema() {
         		'size' => 'tiny',
         		'description' => 'Flag to indicate whether or not attendees will wait for moderator to enter into rooms. (1 = Yes, 0 = No)',
       			),
-    		),
+      		'newwindow' => array(
+        		'type' => 'int',
+        		'not null' => TRUE,
+        		'default' => 0,
+        		'size' => 'tiny',
+        		'description' => 'Flag to indicate whether or not the meetings will start in a new window. (1 = Yes, 0 = No)',
+      			),
+      		'record' => array(
+        		'type' => 'int',
+        		'not null' => TRUE,
+        		'default' => 0,
+        		'size' => 'tiny',
+        		'description' => 'Flag to indicate whether or not the meeting will be recorded. (1 = Yes, 0 = No)',
+      			),
+      		'description' => array(
+        		'type' => 'char',
+        		'length' => 255,
+        		'not null' => TRUE,
+        		'default' => '',
+        		'description' => 'Description for the meeting recording.',
+      			),
+      		'welcome' => array(
+        		'type' => 'char',
+        		'length' => 255,
+        		'not null' => TRUE,
+        		'default' => '',
+        		'description' => 'Welcome message to be showed on the chat meeting window.',
+      			),
+      		'timeavailable' => array(
+        		'type' => 'int',
+        		'not null' => TRUE,
+        		'default' => 0,
+        		'size' => 'big',
+        		'description' => 'Timestamp indicating the time since the meeting is avialable.',
+      			),
+      		'timedue' => array(
+        		'type' => 'int',
+        		'not null' => TRUE,
+        		'default' => 0,
+        		'size' => 'big',
+        		'description' => 'Timestamp indicating the time until the meeting is avialable.',
+      			),
+            ),
     	'primary key' => array('mid'),
     	'indexes' => array(
-      		'meeting_room_name' => array('meeting_room_name'),
+      		'meeting_name' => array('meeting_name'),
     		),
   		);
 
@@ -77,13 +138,14 @@ function bigbluebutton_schema() {
 function bigbluebutton_install() {
   	// Insert a default contact category.
   	db_insert('meeting_room')
-		->fields(array(
-      		'meeting_room_name' => 'Demo Meeting',
+            ->fields(array(
+                'meeting_id' => BigBlueButtonBN::_rand_string( 16 ),
+      		'meeting_name' => 'Demo Meeting',
       		'attendee_pass' => 'ap',
       		'moderator_pass' => 'mp',
       		'wait_for_moderator' => 0,
     		))
-    	->execute();
+            ->execute();
     
 	// Default roles to access meeting rooms
  	$roles = array_map('check_plain', user_roles(TRUE));
@@ -113,10 +175,10 @@ function bigbluebutton_uninstall() {
 		->execute()
 		->fetchAll();
 
-    foreach( $roles as $role ){
-		if ( $role->name == 'bbb attendee' || $role->name == 'bbb moderator' ){
-  			user_role_delete((int) $role->rid);
-		}
+        foreach( $roles as $role ){
+            if ( $role->name == 'bbb attendee' || $role->name == 'bbb moderator' ){
+  		user_role_delete((int) $role->rid);
+            }
 	}
   
 }
