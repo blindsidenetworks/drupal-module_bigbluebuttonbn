@@ -137,11 +137,13 @@ function bigbluebuttonbn_schema() {
  * Implements hook_install().
  */
 function bigbluebuttonbn_install() {
+    $sitename = variable_get('site_name', "");
   	// Insert a default contact category.
     db_insert('bigbluebuttonbn')
         ->fields(array(
             'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
-      	    'meeting_name' => 'Drupal 7 Meeting',
+      	    'meeting_name' => 'My Meeting',
+            'description' => 'Drupal 7 demo meeting '.($sitename!=''? 'for '.$sitename: ''),
             'attendee_pass' => 'ap',
             'moderator_pass' => 'mp',
             'wait_for_moderator' => 0,

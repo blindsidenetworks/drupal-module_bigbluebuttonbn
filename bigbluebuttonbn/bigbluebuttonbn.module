@@ -118,61 +118,61 @@ function bigbluebuttonbn_menu() {
   		);
 
   	$items['admin/config/system/bigbluebuttonbn/meeting/edit'] = array(
-    	'title' 		=> 'Edit Meeting room configuration',
-    	'page callback' 	=> 'drupal_get_form',
-    	'page arguments' 	=> array('bigbluebuttonbn_admin_meeting_form', 'edit'),
-    	'weight'		=> 3,
-    	'access arguments' 	=> array('administer site configuration'),
-    	'file' 			=> 'bigbluebuttonbn.admin.inc',
+    	'title'            => 'Edit Meeting room configuration',
+    	'page callback'    => 'drupal_get_form',
+    	'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'edit'),
+    	'weight'           => 3,
+    	'access arguments' => array('administer site configuration'),
+    	'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
   	$items['admin/config/system/bigbluebuttonbn/meeting/test'] = array(
-    	'title'                 => 'Test Meeting room connectivity',
-    	'page callback'         => 'drupal_get_form',
-    	'page arguments'        => array('bigbluebuttonbn_admin_meeting_test'),
-    	'access arguments'      => array('administer site configuration'),
-    	'file'                  => 'bigbluebuttonbn.admin.inc',
+    	'title'            => 'Test Meeting room connectivity',
+    	'page callback'    => 'drupal_get_form',
+    	'page arguments'   => array('bigbluebuttonbn_admin_meeting_test'),
+    	'access arguments' => array('administer site configuration'),
+    	'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
   	$items['admin/config/system/bigbluebuttonbn/meeting/delete'] = array(
-    	'title' 		=> 'Delete Meeting room',
-    	'page callback' 	=> 'drupal_get_form',
-    	'page arguments' 	=> array('bigbluebuttonbn_admin_meeting_delete_form'),
-    	'access arguments' 	=> array('administer site configuration'),
-    	'file' 			=> 'bigbluebuttonbn.admin.inc',
-  		);
+    	'title'            => 'Delete Meeting room',
+    	'page callback'    => 'drupal_get_form',
+    	'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
+    	'access arguments' => array('administer site configuration'),
+        'file'             => 'bigbluebuttonbn.admin.inc',
+        );
 
 	$items['bigbluebuttonbn/join'] = array(
-	'title'                 => 'Join BigBlueButton',
-	'page callback'         => 'drupal_get_form',
-	'page arguments'      => array('bigbluebuttonbn_join_block_form'),
-	'access callback'       => 'user_access',
-	'access arguments'      => array('access application form'),		
-	'type'                  => MENU_SUGGESTED_ITEM
-	);
+        'title'            => 'BigBlueButtonBN',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('bigbluebuttonbn_join_block_form'),
+        'access callback'  => 'user_access',
+        'access arguments' => array('access application form'),		
+        'type'             => MENU_SUGGESTED_ITEM
+        );
 
   	$items['bigbluebuttonbn/ping'] = array(
-    	'page callback'         => 'bigbluebuttonbn_ping_response',
-	'page arguments'        => array(1),
-    	'access callback'       => 'user_access',
-    	'access arguments'      => array('access content'),
-  	);
+        'page callback'    => 'bigbluebuttonbn_ping_response',
+        'page arguments'   => array(1),
+        'access callback'  => 'user_access',
+        'access arguments' => array('access content'),
+        );
 
   	$items['bigbluebuttonbn/joining'] = array(
-    	'title'                 => 'Joining BigBlueButton',
-    	'page callback'         => 'bigbluebuttonbn_joining_response',
-	'page arguments'        => array(1),
-    	'access callback'       => 'user_access',
-    	'access arguments'      => array('access content'),
-  	);
+        'title'            => 'Join BigBlueButton',
+        'page callback'    => 'bigbluebuttonbn_joining_response',
+        'page arguments'   => array(1),
+        'access callback'  => 'user_access',
+    	'access arguments' => array('access content'),
+        );
   
-        $items['bigbluebuttonbn/recordings'] = array(
-    	'title'                 => 'BigBlueButton Recordings',
-    	'page callback'         => 'bigbluebuttonbn_recordings_response',
-	'page arguments'        => array(1),
-    	'access callback'       => 'user_access',
-    	'access arguments'      => array('access content'),
-  	);
+    $items['bigbluebuttonbn/recordings'] = array(
+        'title'            => 'RecordingsBN',
+        'page callback'    => 'bigbluebuttonbn_recordings_response',
+        'page arguments'   => array(1),
+        'access callback'  => 'user_access',
+        'access arguments' => array('access content'),
+        );
 
         return $items;
 }  //  End of bigbluebuttonbn_menu().
