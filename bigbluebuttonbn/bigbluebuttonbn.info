@@ -1,0 +1,15 @@
+name = BigBlueButtonBN
+description = Integrates BigBlueButton into Drupal allowing administrators to create and manage meeting rooms for interacting with Website users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://www.bigbluebutton.org/support/
+package = BigBlueButtonBN
+files[] = bigbluebuttonbn.module
+files[] = bigbluebuttonbn.install
+files[] = bigbluebuttonbn.admin.inc
+files[] = bbb_api/bbb_api.php
+files[] = js/jquery.min.js
+files[] = js/jquery.dataTables.js
+files[] = js/bigbluebuttonbn.js
+files[] = pix/polling.gif
+core = "7.x"
+version = "7.x-1.0.8-dev"
+project = "bigbluebuttonbn"
+configure = admin/config/system/bigbluebuttonbn/settings

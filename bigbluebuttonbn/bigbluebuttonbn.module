@@ -1,0 +1,576 @@
+<?php
+/*
+Plugin Name:   BigBlueButtonBN
+Plugin URI:    http://blindsidenetworks.com/integration
+Author:        Blindside Networks
+Author URI:    http://www.blindsidenetworks.com/
+Description:   BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebuttonbn.org/support
+
+Copyright 2011-2012 Blindside Networks
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+Versions:
+7.x-1.0.x-dev	--  	Initial version written by Jesus Federico
+(email : jesus [a t ] b l i n d si de n  et w o rks DOT com)
+ 
+*/
+
+include_once( "bigbluebuttonbn.admin.inc" );
+
+/**
+ * Implements hook_help().
+ */
+function bigbluebuttonbn_help($path, $arg) {
+    switch ($path) {
+        case 'admin/help#bigbluebuttonbn':
+            $output = '';
+            $output .= '<h3>' . t('About') . '</h3>';
+            $output .= '<p>' . t('The BigBlueButton module allows users to join a meeting room in a BigBlueButton server. In order to have access as attendee or moderator, users need to know the right password which is set up by administrators throught the administration dashboard. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit <a href="@contact">http://bigbluebuttonbn.org/support</a>.', array('@contact' => 'http://bigbluebuttonbn.org/support')) . '</p>';
+            $output .= '<h3>' . t('Uses') . '</h3>';
+            $output .= '<dl>';
+            $output .= '<dt>' . t('User contact forms') . '</dt>';
+            $output .= '<dd>' . t('Site users ...') . '</dd>';
+            $output .= '<dt>' . t('Site-wide contact forms') . '</dt>';
+            $output .= '<dd>' . t('The ...') . '</p>';
+            $output .= '<dt>' . t('Navigation') . '</dt>';
+            $output .= '<dd>' . t("When ...") . '</dd>';
+            $output .= '<dt>' . t('Customization') . '</dt>';
+            $output .= '<dd>' . t('If you...') . '</dd>';
+            $output .= '</dl>';
+            return $output;
+        case 'admin/config/system/bigbluebuttonbn':
+            $output = '<p>' . t('Set up the general configuration on this page.') . '</p>';
+            return $output;
+        case 'admin/config/system/bigbluebuttonbn/meeting':
+            $output = '<p>' . t('Add, edit, delete, enable/disable meeting rooms on this page.') . '</p>';
+            return $output;
+    }
+}
+
+
+/**
+ * Implementation of hook_permission()
+ */
+function bigbluebuttonbn_permission() {
+    return array(
+            'access application form' => array(
+                    'title' => t('BigBlueButtonBN form access'),
+                    'description' => t('Allow users access the bigbluebutton form'),
+            ),
+        );
+}
+
+
+/**
+ * Implements hook_menu()
+ */
+function bigbluebuttonbn_menu() {
+    $items['admin/config/system/bigbluebuttonbn'] = array(
+            'title'            => 'BigBlueButtonBN',
+            'description'      => 'Set parameters to enable web conferencing system connectivity.',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_settings'),
+            'access arguments' => array('administer bigbluebuttonbn module'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+        );
+
+    $items['admin/config/system/bigbluebuttonbn/settings'] = array(
+            'title'            => 'General settings',
+            'weight'           => -2,
+            'type'             => MENU_DEFAULT_LOCAL_TASK,
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting'] = array(
+            'title'            => 'Meetings',
+            'page callback'    => 'bigbluebuttonbn_admin_meeting_list',
+            'weight'           => -1,
+            'type'             => MENU_LOCAL_TASK,
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting/list'] = array(
+            'title'            => 'List',
+            'type'             => MENU_DEFAULT_LOCAL_TASK,
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting/add'] = array(
+            'title'            => 'Add Meeting',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'add'),
+            'type'             => MENU_LOCAL_TASK + MENU_CONTEXT_INLINE,
+            'weight'           => 3,
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting/edit'] = array(
+            'title'            => 'Edit Meeting',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'edit'),
+            'weight'           => 3,
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting/join'] = array(
+            'title'            => 'Test Meeting',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_join'),
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+  		);
+
+    $items['admin/config/system/bigbluebuttonbn/meeting/delete'] = array(
+            'title'            => 'Delete Meeting',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+        );
+
+    //  These items are for internal use
+    //  :Starts
+    $items['bigbluebuttonbn/ping'] = array(
+            'title'            => 'Ping',
+            'page callback'    => 'bigbluebuttonbn_ping_response',
+            'page arguments'   => array(2),
+            'access callback'  => 'user_access',
+            'access arguments' => array('access content'),
+            'type'             => MENU_CALLBACK,
+    );
+
+    $items['bigbluebuttonbn/join'] = array(
+            'title'            => 'Join',
+            'page callback'    => 'bigbluebuttonbn_join_response',
+            'page arguments'   => array(2),
+            'access callback'  => 'user_access',
+            'access arguments' => array('access content'),
+            'type'             => MENU_CALLBACK,
+    );
+    //  :Ends
+    
+    $items['bigbluebuttonbn/joinform'] = array(
+            'title'            => 'BigBlueButtonBN Form',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_page_join_form'),
+            'access callback'  => 'user_access',
+            'access arguments' => array('access application form'),
+            //'type'             => MENU_SUGGESTED_ITEM,
+            'type'             => MENU_NORMAL_ITEM,
+        );
+/*
+    $items['bigbluebuttonbn/recordings'] = array(
+            'title'            => 'RecordingsBN',
+            'page callback'    => 'bigbluebuttonbn_recordings_response',
+            'page arguments'   => array(1),
+            'access callback'  => 'user_access',
+            'access arguments' => array('access content'),
+    );
+*/
+
+    return $items;
+}  //  End of bigbluebuttonbn_menu().
+
+
+/**
+ * Process annotation settings submission.
+ */
+function bigbluebuttonbn_admin_settings_submit($form, $form_state) {
+
+}  //  End of bigbluebuttonbn_admin_settings_submit().
+
+
+////////////// Block Definition  ////////////////////////
+/**
+ * Implements hook_block_info().
+ */
+function bigbluebuttonbn_block_info() {
+    $blocks['bigbluebuttonbn'] = array(
+            'info'                  => t('BigBlueButtonBN Block'),
+            'cache'                 => DRUPAL_NO_CACHE, 
+            //'status'              => FALSE,			    //Activate this line before launch the beta release
+            'status'                => TRUE,   			    //Delete this line before launch the beta release
+            'region'                => 'sidebar_first',     //Delete this line before launch the beta release
+            'weight'                => 0,
+            'visibility'            => BLOCK_VISIBILITY_NOTLISTED,
+    );
+
+    return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function bigbluebuttonbn_block_view($delta = '') {
+    switch ($delta) {
+        case 'bigbluebuttonbn':
+            $block['title'] = t('BigBlueButtonBN');
+            $bigbluebuttonbn_block_join_form = drupal_get_form('bigbluebuttonbn_block_join_form');
+            $block['content'] = drupal_render($bigbluebuttonbn_block_join_form);
+            return $block;
+            break;
+    }
+}
+
+//Create the form for block_join
+function bigbluebuttonbn_block_join_form($form, &$form_state) {
+    //Set meeting rooms available at $meeting_options[
+    $meetings = bigbluebuttonbn_getAllMeetings();
+    foreach ( $meetings as $meeting )
+        $meeting_options[$meeting['mid']] = $meeting['meeting_name'];
+
+    $user = $GLOBALS['user'];
+    $bigbluebuttonbn_name = "";
+    $bigbluebuttonbn_name_disabled = FALSE;
+    $bigbluebuttonbn_showName = 'true';
+    if ( $user->uid != 0 ){ // is not anonymous user
+        $bigbluebuttonbn_name = $user->name;
+        $bigbluebuttonbn_name_disabled = TRUE;
+        $bigbluebuttonbn_showName = 'false';
+    }
+
+    $bigbluebuttonbn_password_disabled = FALSE;
+    $bigbluebuttonbn_showPassword = 'true';
+    if ( in_array("bbb attendee", $user->roles) || in_array("bbb moderator", $user->roles) ){
+        $bigbluebuttonbn_password_disabled = TRUE;
+        $bigbluebuttonbn_showPassword = 'false';
+    }
+
+    //Form definition starts
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showName'] = array(
+            '#type' => 'hidden',
+            '#value' => $bigbluebuttonbn_showName,
+    );
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showPassword'] = array(
+            '#type' => 'hidden',
+            '#value' => $bigbluebuttonbn_showPassword,
+    );
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_meeting_mid'] = array(
+            '#title' => t('Meeting'),
+            '#type' => 'select',
+            '#options' => $meeting_options,
+    );
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_name'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Name'),
+            '#default_value' => t($bigbluebuttonbn_name),
+            '#disabled' => $bigbluebuttonbn_name_disabled,
+            '#size' => 15,
+            '#states' => array(
+                    'visible' => array(
+                            ':input[name="bigbluebuttonbn_showName"]' => array('value' => 'true')
+                    ),
+            ),
+    );
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_password'] = array(
+            '#type' => 'password',
+            '#title' => t('Password'),
+            '#disabled' => $bigbluebuttonbn_password_disabled,
+            '#size' => 15,
+            '#states' => array(
+                    'visible' => array(
+                            ':input[name="bigbluebuttonbn_showPassword"]' => array('value' => 'true')
+                    ),
+            ),
+    );
+    $form['bigbluebuttonbn_block_join_form']['submit'] = array(
+            '#type' => 'submit',
+            '#value' => 'Join',
+    );
+
+    return $form;
+}
+
+//Create the form handler for block_join
+function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
+    $mid = $form_state['input']['bigbluebuttonbn_meeting_mid'];
+    $meeting = bigbluebuttonbn_getMeeting($mid);
+    
+    $user = $GLOBALS['user'];
+    if ( $user->uid != 0 ) // is not anonymous user
+        $meeting['user_name'] = $user->name;
+    else
+        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
+
+    //get meeting info
+    if ( in_array("bbb attendee", $user->roles) )
+        $meeting['user_password'] = $meeting['attendee_pass'];
+    else if ( in_array("bbb moderator", $user->roles) )
+        $meeting['user_password'] = $meeting['moderator_pass'];
+    else
+        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
+
+    $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
+	if ( $bbb_joinURL != NULL ){
+	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
+            $form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+        } else {
+		    $form_state['redirect'] = $bbb_joinURL;
+        }
+	}
+    
+}
+
+//Create the form for page_join
+function bigbluebuttonbn_page_join_form($form, &$form_state) {
+    //Set meeting rooms available at $meeting_options[
+    $meetings = bigbluebuttonbn_getAllMeetings();
+    foreach ( $meetings as $meeting )
+        $meeting_options[$meeting['meeting_id']] = $meeting['meeting_name'];
+
+    $user = $GLOBALS['user'];
+    $bigbluebuttonbn_name = "";
+    $bigbluebuttonbn_name_disabled = FALSE;
+    $bigbluebuttonbn_showName = 'true';
+    if ( $user->uid != 0 ){ // is not anonymous user
+        $bigbluebuttonbn_name = $user->name;
+        $bigbluebuttonbn_name_disabled = TRUE;
+        $bigbluebuttonbn_showName = 'false';
+    }
+
+    $bigbluebuttonbn_password_disabled = FALSE;
+    $bigbluebuttonbn_showPassword = 'true';
+    if ( in_array("bbb attendee", $user->roles) || in_array("bbb moderator", $user->roles) ){
+        $bigbluebuttonbn_password_disabled = TRUE;
+        $bigbluebuttonbn_showPassword = 'false';
+    }
+
+    //Form definition starts
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showName'] = array(
+            '#type' => 'hidden',
+            '#value' => $bigbluebuttonbn_showName,
+    );
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showPassword'] = array(
+            '#type' => 'hidden',
+            '#value' => $bigbluebuttonbn_showPassword,
+    );
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_meeting_mid'] = array(
+            '#title' => t('Meeting'),
+            '#type' => 'select',
+            '#options' => $meeting_options,
+    );
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_name'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Name'),
+            '#default_value' => t($bigbluebuttonbn_name),
+            '#disabled' => $bigbluebuttonbn_name_disabled,
+            '#size' => 15,
+            '#states' => array(
+                    'visible' => array(
+                            ':input[name="bigbluebuttonbn_showName"]' => array('value' => 'true')
+                    ),
+            ),
+    );
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_password'] = array(
+            '#type' => 'password',
+            '#title' => t('Password'),
+            '#disabled' => $bigbluebuttonbn_password_disabled,
+            '#size' => 15,
+            '#states' => array(
+                    'visible' => array(
+                            ':input[name="bigbluebuttonbn_showPassword"]' => array('value' => 'true')
+                    ),
+            ),
+    );
+    $form['bigbluebuttonbn_page_join_form']['submit'] = array(
+            '#type' => 'submit',
+            '#value' => 'Join',
+    );
+
+    return $form;
+}
+
+//Create the form handler for page_join
+function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
+    $mid = $form_state['input']['bigbluebuttonbn_meeting_mid'];
+    $meeting = bigbluebuttonbn_getMeeting($mid);
+    
+    $user = $GLOBALS['user'];
+    if ( $user->uid != 0 ) // is not anonymous user
+        $meeting['user_name'] = $user->name;
+    else
+        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
+
+    //get meeting info
+    if ( in_array("bbb attendee", $user->roles) )
+        $meeting['user_password'] = $meeting['attendee_pass'];
+    else if ( in_array("bbb moderator", $user->roles) )
+        $meeting['user_password'] = $meeting['moderator_pass'];
+    else
+        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
+
+    $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
+	if ( $bbb_joinURL != NULL ){
+	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
+            $form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+        } else {
+		    $form_state['redirect'] = $bbb_joinURL;
+        }
+	}
+    
+}
+
+function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
+    
+    $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
+    
+    global $base_path;
+    global $base_root;
+
+    $meeting = bigbluebuttonbn_getMeeting($mid);
+
+    $output = '';
+
+    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
+    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
+    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
+
+    drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
+
+    drupal_add_js(array('bigbluebuttonbn_joinURL' => urldecode($joinURL)), 'setting');
+    drupal_add_js(array('bigbluebuttonbn_view' => 'join'), 'setting');
+
+    //Link this one to the right parameter
+    drupal_add_js(array('bigbluebuttonbn_waitformoderator' => $meeting['wait_for_moderator']?'true':'false' ), 'setting');
+    drupal_add_js(array('bigbluebuttonbn_newwindow' => $meeting['newwindow']?'true':'false' ), 'setting');
+
+    $output .= 	"<div align=center>"."\n";
+    $output .=	"<br />The virtual class has not yet started. Waiting until a moderator joins<br /><br />"."\n";
+    $output .= 	"<center><img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/polling.gif'></center>"."\n";
+
+    return $output;
+}
+
+
+function bigbluebuttonbn_ping_response($action, $meeting_id) {
+    $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
+    
+    drupal_add_http_header('Content-Type', 'application/xml');
+
+    echo BigBlueButtonBN::getMeetingXML( $meeting_id, $URL, $SALT );
+}
+
+function bigbluebuttonbn_recordings_response($action, $meetingnameencoded = '', $format = 'drupal') {
+    $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
+    
+    global $base_path;
+    global $base_root;
+
+    if ( $meetingnameencoded != '' ){
+        $meetingnamedecoded = urldecode($meetingnameencoded);
+
+        if ( $format == 'json' ){
+
+            $meetings = bigbluebuttonbn_getAllMeetings();
+            $meetingIDs = '';
+            foreach( $meeting as $meetings ){
+                if( length($meetingIDs)) $meetingIDs .= ', ';
+                $meetingIDs .= $meeting['meeting_id'];
+            }
+
+            //Start building the content
+            drupal_add_http_header('Content-Type', 'application/json');
+            echo '{ "aaData": ['."\n";
+
+            if( $meetingIDs != '' ){
+                //Retrive all the recordings for the meetingID that starts with $meetingnameencoded
+                $recordings = BigBlueButtonBN::getRecordingsArray($meetingIDs, $URL, $SALT);
+                
+                if ( isset($recordings) )
+                
+                    foreach( $recordings as $recording ){
+                
+                    if ( in_array($recording['meetingID'], $meetings ) ){
+                
+                        if ( bigbluebuttonbn_ismoderator() || $recording['published'] == 'true' ) {
+                            $meta_description = isset($recording['meta_description'])?$recording['meta_description']:'';
+                            $actionbar = '';
+                            if ( bigbluebuttonbn_ismoderator() ) {
+                                $deleteURL = BigBlueButtonBN::deleteRecordingsURL($recording['recordID'], $URL, $SALT);
+                                if ( $recording['published'] == 'true' ){
+                                    $publishURL = BigBlueButtonBN::setPublishRecordingsURL($recording['recordID'], 'false', $URL, $SALT);
+                                    $actionbar = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/hide.gif' class='iconsmall' alt='Hide' onClick='bigbluebuttonbn_actionCall(\\\"".$publishURL."\\\")'   />";
+                                } else {
+                                    $publishURL = BigBlueButtonBN::setPublishRecordingsURL($recording['recordID'], 'true', $URL, $SALT);
+                                    $actionbar = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/show.gif' class='iconsmall' alt='Show' onClick='bigbluebuttonbn_actionCall(\\\"".$publishURL."\\\")'   />";
+                                }
+                                $actionbar = $actionbar."<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/delete.gif' class='iconsmall' alt='Delete' onClick='bigbluebuttonbn_actionCall(\\\"".$deleteURL."\\\",\\\"delete\\\")'   />";
+                            }
+                            $type = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/".$recording['playback']['type'].".gif' alt='".$recording['playback']['type']."'>";
+                            echo '	["'.$type.'","<a href=\"'.$recording['playback']['url'].'\" target=\"_new\">'.$recording['meetingID'].'</a>","'.$meta_description.'","'.$recording['startTime'].'","'.$actionbar.'"],'."\n";
+                
+                        }
+                    }
+                
+                }
+                
+            }
+
+            echo '	["","","","",""]'."\n";
+            echo ']  }'."\n";
+
+        } else if ( $format == 'xml' ) {
+
+            drupal_add_http_header('Content-Type', 'application/xml');
+            $content = '<?xml version="1.0" encoding="ISO-8859-1"?>'."\n";
+            $content .= BigBlueButtonBN::_wrap_rawxml_load_file( BigBlueButtonBN::getRecordingsURL($meetingnameencoded, $URL, $SALT))."\n";
+            echo $content;
+        } else {
+
+            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
+            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/dataTables.js');
+            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/recordings.js');
+
+            drupal_add_js(array('bigbluebuttonbn_view' => 'recordings'), 'setting');
+            drupal_add_js(array('bigbluebuttonbn_jsonURL' => $base_root.$base_path.'bigbluebuttonbn/recordings/'.$meetingnameencoded.'/json'), 'setting');
+            drupal_add_js(array('bigbluebuttonbn_ismoderator' => bigbluebuttonbn_ismoderator()?'true':'false' ), 'setting');
+
+            $output  = '    <center>'."\n";
+            $output .= '      <div id="dynamic"></div>'."\n";
+            $output .= '      <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">'."\n";
+            $output .= '        <thead>'."\n";
+            $output .= '        </thead>'."\n";
+            $output .= '        <tbody>'."\n";
+            $output .= '        </tbody>'."\n";
+            $output .= '        <tfoot>'."\n";
+            $output .= '        </tfoot>'."\n";
+            $output .= '      </table>'."\n";
+            $output .= '    </center>'."\n";
+
+            return $output;
+        }
+    } else {
+        return 'Error';
+    }
+
+}
+
+function bigbluebuttonbn_ismoderator(){
+    $user = $GLOBALS['user'];
+
+    //get meeting info
+    if ( in_array("bbb moderator", $user->roles) || in_array("administrator", $user->roles) )
+        return true;
+    else
+        return false;
+
+}
+
+?>
