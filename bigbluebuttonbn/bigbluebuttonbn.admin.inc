@@ -1,6 +1,6 @@
 <?php
 /*
- Plugin Name: BigBlueButton BN
+Plugin Name: BigBlueButtonBN
 Plugin URI: http://blindsidenetworks.com/integration
 Author: Blindside Networks
 Author URI: http://blindsidenetworks.com/

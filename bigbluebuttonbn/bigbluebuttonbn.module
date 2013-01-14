@@ -70,7 +70,7 @@ function bigbluebuttonbn_permission() {
                     'title' => t('BigBlueButtonBN form access'),
                     'description' => t('Allow users access the bigbluebutton form'),
             ),
-    );
+        );
 }
 
 
@@ -164,7 +164,7 @@ function bigbluebuttonbn_menu() {
     //  :Ends
     
     $items['bigbluebuttonbn/joinform'] = array(
-            'title'            => 'BigBlueButtonBN',
+            'title'            => 'BigBlueButtonBN Form',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_page_join_form'),
             'access callback'  => 'user_access',
@@ -200,7 +200,7 @@ function bigbluebuttonbn_admin_settings_submit($form, $form_state) {
  */
 function bigbluebuttonbn_block_info() {
     $blocks['bigbluebuttonbn'] = array(
-            'info'                  => t('BigBlueButtonBN'),
+            'info'                  => t('BigBlueButtonBN Block'),
             'cache'                 => DRUPAL_NO_CACHE, 
             //'status'              => FALSE,			    //Activate this line before launch the beta release
             'status'                => TRUE,   			    //Delete this line before launch the beta release
@@ -228,7 +228,6 @@ function bigbluebuttonbn_block_view($delta = '') {
 
 //Create the form for block_join
 function bigbluebuttonbn_block_join_form($form, &$form_state) {
-
     //Set meeting rooms available at $meeting_options[
     $meetings = bigbluebuttonbn_getAllMeetings();
     foreach ( $meetings as $meeting )
@@ -251,21 +250,23 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
         $bigbluebuttonbn_showPassword = 'false';
     }
 
+    debug($bigbluebuttonbn_name_disabled);
+    debug($bigbluebuttonbn_password_disabled);
     //Form definition starts
-    $form['bigbluebuttonbn_meeting']['bigbluebuttonbn_showName'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showName'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showName,
     );
-    $form['bigbluebuttonbn_meeting']['bigbluebuttonbn_showPassword'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showPassword'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showPassword,
     );
-    $form['bigbluebuttonbn_meeting']['bigbluebuttonbn_meeting_mid'] = array(
-            '#title' => t('Meeting room'),
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_meeting_mid'] = array(
+            '#title' => t('Meeting'),
             '#type' => 'select',
             '#options' => $meeting_options,
     );
-    $form['bigbluebuttonbn_name'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_name'] = array(
             '#type' => 'textfield',
             '#title' => t('Name'),
             '#default_value' => t($bigbluebuttonbn_name),
@@ -277,7 +278,7 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
                     ),
             ),
     );
-    $form['bigbluebuttonbn_password'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_password'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
             '#disabled' => $bigbluebuttonbn_password_disabled,
@@ -288,7 +289,7 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
                     ),
             ),
     );
-    $form['submit'] = array(
+    $form['bigbluebuttonbn_block_join_form']['submit'] = array(
             '#type' => 'submit',
             '#value' => 'Join',
     );
@@ -328,7 +329,6 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
 
 //Create the form for page_join
 function bigbluebuttonbn_page_join_form($form, &$form_state) {
-
     //Set meeting rooms available at $meeting_options[
     $meetings = bigbluebuttonbn_getAllMeetings();
     foreach ( $meetings as $meeting )
@@ -351,6 +351,10 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
         $bigbluebuttonbn_showPassword = 'false';
     }
 
+    debug('bigbluebuttonbn_name_disabled');
+    debug($bigbluebuttonbn_name_disabled);
+    debug('bigbluebuttonbn_password_disabled');
+    debug($bigbluebuttonbn_password_disabled);
     //Form definition starts
     $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showName'] = array(
             '#type' => 'hidden',
@@ -361,7 +365,7 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
             '#value' => $bigbluebuttonbn_showPassword,
     );
     $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_meeting_mid'] = array(
-            '#title' => t('Meeting room'),
+            '#title' => t('Meeting'),
             '#type' => 'select',
             '#options' => $meeting_options,
     );
