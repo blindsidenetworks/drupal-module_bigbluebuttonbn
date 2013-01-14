@@ -126,10 +126,10 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/test'] = array(
+    $items['admin/config/system/bigbluebuttonbn/meeting/join'] = array(
             'title'            => 'Test Meeting',
             'page callback'    => 'drupal_get_form',
-            'page arguments'   => array('bigbluebuttonbn_admin_meeting_test'),
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_join'),
             'access arguments' => array('administer site configuration'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
@@ -231,7 +231,7 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
     //Set meeting rooms available at $meeting_options[
     $meetings = bigbluebuttonbn_getAllMeetings();
     foreach ( $meetings as $meeting )
-        $meeting_options[$meeting['meeting_id']] = $meeting['meeting_name'];
+        $meeting_options[$meeting['mid']] = $meeting['meeting_name'];
 
     $user = $GLOBALS['user'];
     $bigbluebuttonbn_name = "";
@@ -250,8 +250,6 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
         $bigbluebuttonbn_showPassword = 'false';
     }
 
-    debug($bigbluebuttonbn_name_disabled);
-    debug($bigbluebuttonbn_password_disabled);
     //Form definition starts
     $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showName'] = array(
             '#type' => 'hidden',
@@ -351,10 +349,6 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
         $bigbluebuttonbn_showPassword = 'false';
     }
 
-    debug('bigbluebuttonbn_name_disabled');
-    debug($bigbluebuttonbn_name_disabled);
-    debug('bigbluebuttonbn_password_disabled');
-    debug($bigbluebuttonbn_password_disabled);
     //Form definition starts
     $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showName'] = array(
             '#type' => 'hidden',
@@ -432,9 +426,6 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
 
 function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
     
-    debug($action);
-    debug($mid);
-    debug($joinURL);
     $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
     

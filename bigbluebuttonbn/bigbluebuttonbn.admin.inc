@@ -153,7 +153,6 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
         ->fields(array(
                 'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
                 'meeting_name' => $form_state['values']['meeting_name'],
-                'meeting_version' => time(),
                 'attendee_pass' => $form_state['values']['attendee_pass'],
                 'moderator_pass' => $form_state['values']['moderator_pass'],
                 'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
@@ -204,7 +203,7 @@ function bigbluebuttonbn_admin_meeting_list() {
             t('Attendee password'),
             t('Moderator password'),
             t('Status'),
-            array('data' => t('Operations'), 'colspan' => 3),
+            array('data' => t('Operations'), 'colspan' => 4),
   		);
     // Initialize rows array
     $rows = array();
@@ -218,17 +217,16 @@ function bigbluebuttonbn_admin_meeting_list() {
 
     // Loop through the meeting rooms and add them to the table.
     foreach ($meetings_ as $meeting) {
-        //debug(BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_name, $url_val, $salt_val), "status", $print_r = TRUE);
-
         $rows[] = array(
                 check_plain($meeting->meeting_name),
                 check_plain($meeting->attendee_pass),
                 check_plain($meeting->moderator_pass),
-                //(BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_name, $url_val, $salt_val) ? "Running" : "Not running"),
-                (string) BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $url_val, $salt_val),
+                
+                (BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $url_val, $salt_val) ? "Running" : "Not running"),
                 l(t('Edit'), 'admin/config/system/bigbluebuttonbn/meeting/edit/' . $meeting->mid),
-                l(t('Test'), 'admin/config/system/bigbluebuttonbn/meeting/test/' . $meeting->mid),
                 l(t('Delete'), 'admin/config/system/bigbluebuttonbn/meeting/delete/' . $meeting->mid),
+                l(t('Join'), 'admin/config/system/bigbluebuttonbn/meeting/join/' . $meeting->mid),
+                BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $url_val, $salt_val) ? l(t('End'), 'admin/config/system/bigbluebuttonbn/meeting/end/' . $meeting->mid): ''
         );
     }
 
@@ -291,8 +289,10 @@ function bigbluebuttonbn_admin_meeting_delete_form_submit($form, &$form_state) {
 
 }
 
-function bigbluebuttonbn_admin_meeting_test($form, &$form_state) {
-
+function bigbluebuttonbn_admin_meeting_join($form, &$form_state) {
+    
+    //debug($form_state, "form_state", $print_r = TRUE);
+    
     $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
 
     $user = $GLOBALS['user'];
@@ -322,7 +322,7 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
     if ( $mid != NULL ) {
         $results = db_select('bigbluebuttonbn', 'm')
         ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'description', 'welcome'))
-        ->condition('meeting_id', $mid, '=')
+        ->condition('mid', $mid, '=')
         ->orderBy('meeting_name')
         ->execute()
         ->fetchAll();
@@ -368,7 +368,7 @@ function bigbluebuttonbn_joinMeeting($meeting){
 
     $user_name = $meeting['user_name'];
     $user_password = $meeting['user_password'];
-
+    
     //Validate the password
     if ( $user_password != $moderatorPW && $user_password != $attendeePW ) {
         drupal_set_message(t("The password typed doesn't match neither the attendee password nor the moderator password registered."));
