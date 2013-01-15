@@ -35,6 +35,8 @@ include_once( "bigbluebuttonbn.admin.inc" );
  */
 function bigbluebuttonbn_schema() {
 
+    $schema = array();
+    
     $schema['bigbluebuttonbn'] = array(
             'description' => t('Meeting room settings.'),
             'fields' => array(
@@ -127,6 +129,51 @@ function bigbluebuttonbn_schema() {
                     'meeting_name' => array('meeting_name'),
             ),
   		);
+
+    $schema['bigbluebuttonbn_logs'] = array(
+            'description' => t('Event log.'),
+            'fields' => array(
+                    'id' => array(
+                            'type' => 'serial',
+                            'unsigned' => TRUE,
+                            'not null' => TRUE,
+                            'description' => 'Primary Key: A unique ID for each log entry.',
+                    ),
+                    'meeting_id' => array(
+                            'type' => 'char',
+                            'length' => 64,
+                            'not null' => TRUE,
+                            'default' => '',
+                            'description' => 'Meeting room id.',
+                    ),
+                    'record' => array(
+                            'type' => 'tinyint',
+                            'not null' => TRUE,
+                            'default' => 0,
+                            'size' => 'tiny',
+                            'description' => 'Flag to indicate whether or not the meeting was recorded. (1 = Yes, 0 = No)',
+                    ),
+                    'timestamp' => array(
+                            'type' => 'int',
+                            'not null' => TRUE,
+                            'default' => 0,
+                            'size' => 'big',
+                            'description' => 'Timestamp indicating the time entry was recorded.',
+                    ),
+                    'event' => array(
+                            'type' => 'char',
+                            'length' => 255,
+                            'not null' => TRUE,
+                            'default' => '',
+                            'description' => 'Tag for the event.',
+                    ),
+            ),
+            'primary key' => array('id'),
+            'indexes' => array(
+                    'meeting_id' => array('meeting_id'),
+            ),
+        );
+
 
     return $schema;
 
