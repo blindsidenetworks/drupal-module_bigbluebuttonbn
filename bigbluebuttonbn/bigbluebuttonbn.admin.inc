@@ -262,7 +262,7 @@ function bigbluebuttonbn_admin_meeting_delete_form($form, &$form_state,  $meetin
 
     return confirm_form(
             $form,
-            t('Are you sure you want to delete %meeting?', array('%meeting_name' => $meeting['meeting_name'])),
+            t('Are you sure you want to delete %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
             'admin/config/system/bigbluebuttonbn/meeting',
             t('This action cannot be undone.'),
             t('Delete'),
@@ -271,7 +271,7 @@ function bigbluebuttonbn_admin_meeting_delete_form($form, &$form_state,  $meetin
 }
 
 /**
- * Submit handler for the confirm delete a Meeting room.
+ * Submit handler for confirmation of Meeting deletion.
  *
  * @see contact_category_delete_form()
  */
@@ -284,6 +284,73 @@ function bigbluebuttonbn_admin_meeting_delete_form_submit($form, &$form_state) {
     ->execute();
 
     drupal_set_message(t('Meeting room %meeting_name has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+
+    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
+
+}
+
+/**
+ * Form builder for ending a Meeting that is running.
+ *
+ */
+function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $meeting_id = NULL) {
+
+    $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
+    
+    $form['meeting_id'] = array(
+            '#type' => 'value',
+            '#value' => $meeting['meeting_id'],
+    );
+    $form['meeting_name'] = array(
+            '#type' => 'value',
+            '#value' => $meeting['meeting_name'],
+    );
+    $form['moderator_pass'] = array(
+            '#type' => 'value',
+            '#value' => $meeting['moderator_pass'],
+    );
+    
+    return confirm_form(
+            $form,
+            t('Are you sure you want to end %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
+            'admin/config/system/bigbluebuttonbn/meeting',
+            t('This action cannot be undone.'),
+            t('End'),
+            t('Cancel')
+    );
+}
+
+/**
+ * Submit handler for confirmation of Meeting ending.
+ *
+ * @see contact_category_delete_form()
+ */
+function bigbluebuttonbn_admin_meeting_end_form_submit($form, &$form_state) {
+
+    $url_val = variable_get('bigbluebuttonbn_server_url', '');
+    $salt_val = variable_get('bigbluebuttonbn_server_salt', '');
+    
+    $meetingID = $form_state['values']['meeting_id'];
+    $moderatorPW = $form_state['values']['moderator_pass'];
+    $response = BigBlueButtonBN::endMeeting($meetingID, $moderatorPW, $url_val, $salt_val );
+
+    //Analyzes the bigbluebutton server's response
+    if(!$response) {//If the server is unreachable, then prompts the user of the necessary action
+        drupal_set_message(t('Unable to terminate the meeting. Please check the url of the bigbluebutton server AND check to see if the bigbluebutton server is running.'));
+    
+    } else if( $response['returncode'] == 'SUCCESS' ) { //The meeting was terminated
+        drupal_set_message(t('Meeting session %meeting_name has been ended. All users have been kicked out.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+    
+    } else { //If the meeting was unable to be termindated
+        if($response['messageKey'] == 'checksumError'){
+            drupal_set_message(t('A checksum error occured. Make sure you entered the correct salt.'));
+        
+        } else {
+            drupal_set_message(t($response['message']));
+
+        }
+
+    }
 
     $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
 
@@ -303,6 +370,7 @@ function bigbluebuttonbn_admin_meeting_join($form, &$form_state) {
     if ( ($bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting)) != NULL )
         header('Location: '.$bbb_joinURL );
 }
+
 
 function bigbluebuttonbn_getMeeting($mid = NULL) {
 

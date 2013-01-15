@@ -126,18 +126,26 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
+    $items['admin/config/system/bigbluebuttonbn/meeting/delete'] = array(
+            'title'            => 'Delete Meeting',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+        );
+
     $items['admin/config/system/bigbluebuttonbn/meeting/join'] = array(
-            'title'            => 'Test Meeting',
+            'title'            => 'Join Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_join'),
             'access arguments' => array('administer site configuration'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/delete'] = array(
-            'title'            => 'Delete Meeting',
+    $items['admin/config/system/bigbluebuttonbn/meeting/end'] = array(
+            'title'            => 'End Meeting',
             'page callback'    => 'drupal_get_form',
-            'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
+            'page arguments'   => array('bigbluebuttonbn_admin_meeting_end_form'),
             'access arguments' => array('administer site configuration'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
