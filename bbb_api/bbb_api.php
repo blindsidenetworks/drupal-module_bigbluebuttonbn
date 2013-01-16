@@ -672,7 +672,7 @@ class BigBlueButtonBN {
 	}
 
 
-	public static function deleteRecordingsURL( $recordID, $URL, $SALT ) {
+	public static function getDeleteRecordingsURL( $recordID, $URL, $SALT ) {
 		$url_delete = $URL."api/deleteRecordings?";
 		$params = 'recordID='.urlencode($recordID);
 		return ($url_delete.$params.'&checksum='.sha1("deleteRecordings".$params.$SALT) );
@@ -683,7 +683,7 @@ class BigBlueButtonBN {
 		
 		$ids = 	explode(",", $recordIDs);
 		foreach( $ids as $id){
-			$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::deleteRecordingsURL($id, $URL, $SALT) );
+			$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::getDeleteRecordingsURL($id, $URL, $SALT) );
 			if( $xml && $xml->returncode != 'SUCCESS' )
 				return false;
 		}
@@ -692,18 +692,18 @@ class BigBlueButtonBN {
 
 
 
-	public static function setPublishRecordingsURL( $recordID, $set, $URL, $SALT ) {
+	public static function getPublishRecordingsURL( $recordID, $set, $URL, $SALT ) {
 		$url_delete = $URL."api/publishRecordings?";
 		$params = 'recordID='.$recordID."&publish=".$set;
 		return ($url_delete.$params.'&checksum='.sha1("publishRecordings".$params.$SALT) );
 	}
 	
 
-	public static function setPublishRecordings( $recordIDs, $set, $URL, $SALT ) {
+	public static function publishRecordings( $recordIDs, $set, $URL, $SALT ) {
 		
 		$ids = 	explode(",", $recordIDs);
 		foreach( $ids as $id){
-			$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::setPublishRecordingsURL($id, $set, $URL, $SALT) );
+			$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::getPublishRecordingsURL($id, $set, $URL, $SALT) );
 			if( $xml && $xml->returncode != 'SUCCESS' )
 				return false;
 		}
