@@ -147,7 +147,7 @@ function bigbluebuttonbn_schema() {
                             'description' => 'Meeting room id.',
                     ),
                     'record' => array(
-                            'type' => 'tinyint',
+                            'type' => 'int',
                             'not null' => TRUE,
                             'default' => 0,
                             'size' => 'tiny',

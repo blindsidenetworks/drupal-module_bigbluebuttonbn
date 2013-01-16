@@ -96,7 +96,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description' => t("Example: 'mp' . To specify the password moderators should use to access the room. Moderators have access to the presentation module and features to control the meeting."),
             '#required' => TRUE,
   		);
-
+/*
     $form['wait_for_moderator'] = array(
             '#type' => 'checkbox',
             '#title' => t('Wait for moderator to start meeting.'),
@@ -110,7 +110,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#default_value' => $meeting['newwindow'],
             '#description'   => t('Checking this box it will open a new window to join meetings.'),
   		);
-
+*/
     $form['record'] = array(
             '#type' => 'checkbox',
             '#title' => t('Playback recording for meeting on/off.'),
@@ -390,9 +390,10 @@ function bigbluebuttonbn_admin_recording_list() {
 
     // Get all the recordings from the database.
     $recordings = bigbluebuttonbn_getAllRecordings();
-    
+    //debug($recordings);
     // Loop through the meeting rooms and add them to the table.
     foreach ($recordings as $recording) {
+        //debug($recording);
         /// Prepare playback recording links
         $type = '';
         foreach ( $recording['playbacks'] as $playback ){
@@ -403,8 +404,8 @@ function bigbluebuttonbn_admin_recording_list() {
         $bloginfourl = '.';
         $actionbar = '';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
-        $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['meetingID']);
-        $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['meetingID']);
+        $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
+        $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
         
         /// Prepare duration
         $endTime = isset($recording['endTime'])? intval(str_replace('"', '\"', $recording['endTime'])):0;
@@ -484,10 +485,13 @@ function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meet
  * @see contact_category_delete_form()
  */
 function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state) {
-
-    //db_delete('bigbluebuttonbn')
-    //->condition('mid', $form_state['build_info']['args'][0])
-    //->execute();
+    //debug($form_state, "form_state", $print_r = TRUE);
+    
+    $URL = variable_get('bigbluebuttonbn_server_url', '');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '');
+    
+    $recordID = $form_state['build_info']['args'][0];
+    BigBluebuttonBN::deleteRecordings($recordID, $URL, $SALT);
 
     drupal_set_message(t('Recording selected has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
 
@@ -495,6 +499,44 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
 
 }
 
+
+/**
+ * Handler for publish Recording.
+ *
+ */
+function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
+    //debug($form_state, "form_state", $print_r = TRUE);
+
+    $URL = variable_get('bigbluebuttonbn_server_url', '');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '');
+
+    $recordID = $form_state['build_info']['args'][0];
+    BigBluebuttonBN::publishRecordings($recordID, 'true', $URL, $SALT);
+
+    drupal_set_message(t('Recording selected has been published.'));
+
+    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/recording';
+
+}
+
+/**
+ * Handler for unpublish Recording.
+ *
+ */
+function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
+    //debug($form_state, "form_state", $print_r = TRUE);
+
+    $URL = variable_get('bigbluebuttonbn_server_url', '');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '');
+
+    $recordID = $form_state['build_info']['args'][0];
+    BigBluebuttonBN::publishRecordings($recordID, 'false', $URL, $SALT);
+    
+    drupal_set_message(t('Recording selected has been unpublished.'));
+
+    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/recording';
+
+}
 
 
 function bigbluebuttonbn_joinMeeting($meeting){
@@ -541,7 +583,6 @@ function bigbluebuttonbn_joinMeeting($meeting){
             } else {
                 if( !isset($response['messageKey']) || $response['messageKey'] == '' ){
                     // The meeting was just created, insert the create event to the log
-                    debug("Saving");
                     db_insert('bigbluebuttonbn_logs')
                     ->fields(array(
                             'meeting_id' => $meetingID,
@@ -652,8 +693,10 @@ function bigbluebuttonbn_getAllRecordings() {
         if ( strlen($meetingIds) > 0 ) $meetingIds .= ',';
         $meetingIds .= $rowset->meeting_id;
     }
-    
-    $recordings = BigBlueButtonBN::getRecordingsArray($meetingIds, $URL, $SALT);
+    if( $meetingIds != '')
+        $recordings = BigBlueButtonBN::getRecordingsArray($meetingIds, $URL, $SALT);
+    else
+        $recordings = array();
 
     return $recordings;
 }

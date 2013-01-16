@@ -164,10 +164,18 @@ function bigbluebuttonbn_menu() {
             'type'             => MENU_DEFAULT_LOCAL_TASK,
         );
 
-    $items['admin/config/system/bigbluebuttonbn/recording/publish'] = array(
+    $items['admin/config/system/bigbluebuttonbn/recording/show'] = array(
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
-            'page arguments'   => array('bigbluebuttonbn_admin_recording_publish_form'),
+            'page arguments'   => array('bigbluebuttonbn_admin_recording_show'),
+            'access arguments' => array('administer site configuration'),
+            'file'             => 'bigbluebuttonbn.admin.inc',
+        );
+        
+    $items['admin/config/system/bigbluebuttonbn/recording/hide'] = array(
+            'title'            => 'Publish/ Unpublish Recording',
+            'page callback'    => 'drupal_get_form',
+            'page arguments'   => array('bigbluebuttonbn_admin_recording_hide'),
             'access arguments' => array('administer site configuration'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
