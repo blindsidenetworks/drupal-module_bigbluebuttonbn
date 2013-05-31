@@ -96,7 +96,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description' => t("Example: 'mp' . To specify the password moderators should use to access the room. Moderators have access to the presentation module and features to control the meeting."),
             '#required' => TRUE,
   		);
-/*
+    
     $form['wait_for_moderator'] = array(
             '#type' => 'checkbox',
             '#title' => t('Wait for moderator to start meeting.'),
@@ -110,7 +110,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#default_value' => $meeting['newwindow'],
             '#description'   => t('Checking this box it will open a new window to join meetings.'),
   		);
-*/
+    
     $form['record'] = array(
             '#type' => 'checkbox',
             '#title' => t('Playback recording for meeting on/off.'),

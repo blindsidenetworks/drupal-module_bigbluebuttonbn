@@ -735,7 +735,7 @@ class BigBlueButtonBN {
 	}
         
         
-        public function _wrap_simplexml_load_file($url){
+        public static function _wrap_simplexml_load_file($url){
 	
             if (extension_loaded('curl')) {
                 $ch = curl_init() or die ( curl_error() );
