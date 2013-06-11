@@ -393,6 +393,7 @@ function bigbluebuttonbn_admin_recording_list() {
     $recordings = array();
     // Get all the recordings from the database.
     $recordingsArray = bigbluebuttonbn_getAllRecordings();
+    //debug($recordingsArray);
     if( $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
         $recordings = $recordingsArray['recordings'];
     }
