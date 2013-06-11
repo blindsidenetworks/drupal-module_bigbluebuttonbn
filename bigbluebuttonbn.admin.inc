@@ -389,8 +389,14 @@ function bigbluebuttonbn_admin_recording_list() {
     // Initialize rows array
     $rows = array();
 
+    // Initializes recordng list array.
+    $recordings = array();
     // Get all the recordings from the database.
-    $recordings = bigbluebuttonbn_getAllRecordings();
+    $recordingsArray = bigbluebuttonbn_getAllRecordings();
+    if( $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
+        $recordings = $recordingsArray['recordings'];
+    }
+    
     //debug($recordings);
     // Loop through the meeting rooms and add them to the table.
     foreach ($recordings as $recording) {
