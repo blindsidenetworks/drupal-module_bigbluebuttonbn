@@ -483,9 +483,12 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
 
     $output = '';
 
-    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
-    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
-    drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
+    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
+    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
+    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
+
+  	//drupal_add_library('bigbluebuttonbn', 'js/heartbeat.js');
+  	//drupal_add_library('bigbluebutton', 'js/heartbeat.js');
 
     drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
 
