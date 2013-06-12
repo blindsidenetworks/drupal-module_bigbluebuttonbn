@@ -515,13 +515,15 @@ class BigBlueButtonBN {
 	* 	- If SUCCESS it returns an xml packet
 	* 	- If the FAILED or the server is unreachable returns a string of 'false'
 	*/
-	public static function getMeetingXML( $meetingID, $URL, $SALT ) {
-		$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::isMeetingRunningURL( $meetingID, $URL, $SALT ) );
-		if( $xml && $xml->returncode == 'SUCCESS') 
-			return ( str_replace('</response>', '', str_replace("<?xml version=\"1.0\"?>\n<response>", '', $xml->asXML())));
-		else
-			return 'false';	
-	}
+    public static function getMeetingXML( $meetingID, $URL, $SALT ) {
+        $xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::isMeetingRunningURL( $meetingID, $URL, $SALT ) );
+        $response = '<response><returncode>FAILED</returncode><running>false</running></response>';
+        
+        if( $xml && $xml->returncode == 'SUCCESS') 
+            $response = $xml->asXML();
+        
+        return $response;
+    }
 
 	
 	// TODO: WRITE AN ITERATOR WHICH GOES OVER WHATEVER IT IS BEING TOLD IN THE API AND LIST INFORMATION

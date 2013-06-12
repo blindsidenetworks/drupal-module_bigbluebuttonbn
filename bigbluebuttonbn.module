@@ -483,24 +483,46 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
 
     $output = '';
 
-    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
     //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
     //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
-
-  	//drupal_add_library('bigbluebuttonbn', 'js/heartbeat.js');
-  	//drupal_add_library('bigbluebutton', 'js/heartbeat.js');
+    
+    $bigbluebuttonbn_pingURL = $base_root.$base_path.'?q=bigbluebuttonbn/ping/'.$meeting['meeting_id'];
+    //$bigbluebuttonbn_pingURL = 'bigbluebuttonbn/ping/'.$meeting['meeting_id'];
+    $bigbluebuttonbn_joinURL = urldecode($joinURL);
 
     drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
-
-    drupal_add_js(array('bigbluebuttonbn_joinURL' => urldecode($joinURL)), 'setting');
+    drupal_add_js(array('bigbluebuttonbn_joinURL' => $bigbluebuttonbn_joinURL), 'setting');
     drupal_add_js(array('bigbluebuttonbn_view' => 'join'), 'setting');
 
     //Link this one to the right parameter
     drupal_add_js(array('bigbluebuttonbn_waitformoderator' => $meeting['wait_for_moderator']?'true':'false' ), 'setting');
     drupal_add_js(array('bigbluebuttonbn_newwindow' => $meeting['newwindow']?'true':'false' ), 'setting');
+    
+    $output .= '
+    <script type="text/javascript">
+        function bigbluebutton_ping() {
+            jQuery.ajax({
+                url : "'.$bigbluebuttonbn_pingURL.'",
+                async : true,
+                dataType : "xml",
+                success : function(xmlDoc){
+                    $xml = jQuery( xmlDoc ), $running = $xml.find( "running" );
+                    if($running.text() == "true"){
+                        window.location = "'.$bigbluebuttonbn_joinURL.'";
+                    }
+                },
+                error : function(xmlHttpRequest, status, error) {
+                    console.debug(xmlHttpRequest);
+                }
+            });
+
+        }
+
+        setInterval("bigbluebutton_ping()", 5000);
+    </script>';
 
     $output .= 	"<div align=center>"."\n";
-    $output .=	"<br />The virtual class has not yet started. Waiting until a moderator joins<br /><br />"."\n";
+    $output .=	"<br />The virtual class has not started yet. Waiting until a moderator joins<br /><br />"."\n";
     $output .= 	"<center><img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/polling.gif'></center>"."\n";
 
     return $output;
