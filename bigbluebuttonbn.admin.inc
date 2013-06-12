@@ -117,6 +117,14 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#default_value' => $meeting['record'],
             '#description'   => t('Checking this box it will activate the playback recording for the current meeting.'),
   		);
+    
+    $form['duration'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Duration'),
+            '#maxlength' => 3,
+            '#default_value' => $meeting['duration'],
+            '#description' => t("Set the duration in minutes expected for the meeting to last. After this time all the users will be kicked out."),
+    );
 
     $form['description'] = array(
             '#type' => 'textfield',
@@ -158,6 +166,7 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
                 'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
                 'newwindow' => $form_state['values']['newwindow'],
                 'record' => $form_state['values']['record'],
+                'duration' => $form_state['values']['duration'],
                 'description' => $form_state['values']['description'],
                 'welcome' => $form_state['values']['welcome'],
         ))
@@ -172,6 +181,7 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
                 'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
                 'newwindow' => $form_state['values']['newwindow'],
                 'record' => $form_state['values']['record'],
+                'duration' => $form_state['values']['duration'],
                 'description' => $form_state['values']['description'],
                 'welcome' => $form_state['values']['welcome'],
         ))
@@ -556,11 +566,13 @@ function bigbluebuttonbn_joinMeeting($meeting){
     $moderatorPW = $meeting['moderator_pass'];
     $attendeePW = $meeting['attendee_pass'];
     $welcome = $meeting['welcome'];
-    $welcome = ( !isset($meeting['welcome']) || $meeting['welcome'] == '')? "Welcome to [$meetingName] Meeting Room.": $meeting['welcome'];
+    $welcome = (( !isset($meeting['welcome']) || $meeting['welcome'] == '')? "Welcome to [$meetingName] Meeting Room.": $meeting['welcome'])."<br>";
     $record = $meeting['record'] == 1? 'true': 'false';
-    $welcome .= $record == 'true'? "<br><br> <b>This meeting has been recorded.</b><br>": '';
+    $welcome .= $record == 'true'? "<br><b>This meeting is being recorded.</b><br>": '';
+    $duration = $meeting['duration'];
+    $welcome .= $duration > 0? "<br><b>The maximum duration for this meeting is ".$duration." minutes.</b><br>": '';
     $description = $meeting['description'];
-
+    
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
     $logoutURL = $GLOBALS['base_url'];
@@ -575,7 +587,7 @@ function bigbluebuttonbn_joinMeeting($meeting){
     } else {
         //Calls create meeting on the bigbluebutton server
         if ( !BigBlueButtonBN::isMeetingCreated( $meetingID, $URL, $SALT ) ){
-            $response = BigBlueButtonBN::createMeetingArray($meetingName, $meetingID, $attendeePW, $moderatorPW,  $URL, $SALT, $logoutURL, $welcome, $record, 0, 0, array("meta_description" => $description, "meta_email" => '') );
+            $response = BigBlueButtonBN::createMeetingArray($meetingName, $meetingID, $attendeePW, $moderatorPW,  $URL, $SALT, $logoutURL, $welcome, $record, $duration, 0, array("meta_description" => $description, "meta_email" => '') );
 
             //Analyzes the bigbluebutton server's response
             if(!$response){//If the server is unreachable, then prompts the user of the necessary action
@@ -623,13 +635,14 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
             'wait_for_moderator' => 0,
             'newwindow' => 0,
             'record' => 0,
+            'duration' => 0,
             'description' => '',
             'welcome' => '',
     );
     
     if ( $mid != NULL ) {
         $results = db_select('bigbluebuttonbn', 'm')
-        ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'description', 'welcome'))
+        ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
         ->condition('mid', $mid, '=')
         ->orderBy('meeting_name')
         ->execute()
@@ -645,6 +658,7 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
                     'wait_for_moderator' => $results[0]->wait_for_moderator,
                     'newwindow' => $results[0]->newwindow,
                     'record' => $results[0]->record,
+                    'duration' => $results[0]->duration,
                     'description' => $results[0]->description,
                     'welcome' => $results[0]->welcome,
             );
@@ -659,7 +673,7 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
 function bigbluebuttonbn_getAllMeetings() {
 
     $results = db_select('bigbluebuttonbn', 'm')
-    ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'description', 'welcome'))
+    ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
     ->orderBy('meeting_name')
     ->execute()
     ->fetchAll();
@@ -674,6 +688,7 @@ function bigbluebuttonbn_getAllMeetings() {
                 'wait_for_moderator' => $rowset->wait_for_moderator,
                 'newwindow' => $rowset->newwindow,
                 'record' => $rowset->record,
+                'duration' => $rowset->duration,
                 'description' => $rowset->description,
                 'welcome' => $rowset->welcome,
         );

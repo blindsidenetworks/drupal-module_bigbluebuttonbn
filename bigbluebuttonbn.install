@@ -95,6 +95,13 @@ function bigbluebuttonbn_schema() {
                             'size' => 'tiny',
                             'description' => 'Flag to indicate whether or not the meeting will be recorded. (1 = Yes, 0 = No)',
                     ),
+                    'duration' => array(
+                            'type' => 'int',
+                            'not null' => TRUE,
+                            'default' => 0,
+                            'size' => 'tiny',
+                            'description' => 'A numeric value in minutes indicates the duration expected for the meeting',
+                    ),
                     'description' => array(
                             'type' => 'char',
                             'length' => 255,
