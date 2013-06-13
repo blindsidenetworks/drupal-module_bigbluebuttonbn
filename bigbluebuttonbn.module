@@ -465,7 +465,11 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
 	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
             $form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
         } else {
-		    $form_state['redirect'] = $bbb_joinURL;
+        	if ( $meeting['newwindow'] ) {
+		    	$form_state['redirect'] = $bbb_joinURL;
+        	} else {
+		    	$form_state['redirect'] = $bbb_joinURL;
+		    }
         }
 	}
     
@@ -483,11 +487,7 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
 
     $output = '';
 
-    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
-    //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
-    
     $bigbluebuttonbn_pingURL = $base_root.$base_path.'?q=bigbluebuttonbn/ping/'.$meeting['meeting_id'];
-    //$bigbluebuttonbn_pingURL = 'bigbluebuttonbn/ping/'.$meeting['meeting_id'];
     $bigbluebuttonbn_joinURL = urldecode($joinURL);
 
     drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
@@ -507,8 +507,14 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
                 dataType : "xml",
                 success : function(xmlDoc){
                     $xml = jQuery( xmlDoc ), $running = $xml.find( "running" );
-                    if($running.text() == "true"){
-                        window.location = "'.$bigbluebuttonbn_joinURL.'";
+                    if($running.text() == "true"){';
+    if($meeting['newwindow'])                    
+    	$output .= '
+                    	window.open("'.$bigbluebuttonbn_joinURL.'");';
+    else
+    	$output .= '
+                        window.location = "'.$bigbluebuttonbn_joinURL.'";';
+    $output .= '
                     }
                 },
                 error : function(xmlHttpRequest, status, error) {
