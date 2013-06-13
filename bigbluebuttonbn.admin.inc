@@ -104,12 +104,14 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description'   => t('Checking this box it will be required a moderator in the meeting in order to allow attendees get into.'),
   		);
 
+    /*
     $form['newwindow'] = array(
             '#type' => 'checkbox',
             '#title' => t('Open meeting in a new window.'),
             '#default_value' => $meeting['newwindow'],
             '#description'   => t('Checking this box it will open a new window to join meetings.'),
   		);
+    */
     
     $form['record'] = array(
             '#type' => 'checkbox',
@@ -170,7 +172,7 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
                     'attendee_pass' => $form_state['values']['attendee_pass'],
                     'moderator_pass' => $form_state['values']['moderator_pass'],
                     'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                    'newwindow' => $form_state['values']['newwindow'],
+                    'newwindow' => isset($form_state['values']['newwindow'])? $form_state['values']['newwindow']: 0,
                     'record' => $form_state['values']['record'],
                     'duration' => $form_state['values']['duration'],
                     'description' => $form_state['values']['description'],
@@ -185,7 +187,7 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
                     'attendee_pass' => $form_state['values']['attendee_pass'],
                     'moderator_pass' => $form_state['values']['moderator_pass'],
                     'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                    'newwindow' => $form_state['values']['newwindow'],
+                    'newwindow' => isset($form_state['values']['newwindow'])? $form_state['values']['newwindow']: 0,
                     'record' => $form_state['values']['record'],
                     'duration' => $form_state['values']['duration'],
                     'description' => $form_state['values']['description'],
