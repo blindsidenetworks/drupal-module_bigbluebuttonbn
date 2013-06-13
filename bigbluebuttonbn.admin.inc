@@ -430,7 +430,6 @@ function bigbluebuttonbn_admin_recording_list() {
         
         /// Prepare actionbar
         $bloginfourl = '.';
-        $actionbar = '';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
         $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
         $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
@@ -459,8 +458,7 @@ function bigbluebuttonbn_admin_recording_list() {
                 $type,
                 $recording['meetingName'],
                 $formatedStartDate,
-                ''.$duration.' min',
-                $actionbar,
+                $duration.' min',
                 $publishLink,
                 $deleteLink
         );
@@ -713,13 +711,13 @@ function bigbluebuttonbn_getAllRecordings() {
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
     
     $results = db_select('bigbluebuttonbn_logs', 'm')
-    ->fields('m', array('id', 'meeting_id', 'record', 'timestamp', 'event'))
-    ->distinct()
-    ->condition('event', 'Create', '=')
-    ->condition('record', 1, '=')
-    ->orderBy('timestamp')
-    ->execute()
-    ->fetchAll();
+        ->fields('m', array('id', 'meeting_id', 'record', 'timestamp', 'event'))
+        ->distinct()
+        ->condition('event', 'Create', '=')
+        ->condition('record', 1, '=')
+        ->orderBy('timestamp')
+        ->execute()
+        ->fetchAll();
 
     $meetingIds = '';
     foreach( $results as $rowset ) {
