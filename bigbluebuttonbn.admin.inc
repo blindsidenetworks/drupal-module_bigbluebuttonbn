@@ -146,7 +146,12 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#type' => 'submit',
             '#value' => t('Submit'),
   		);
-
+    $form['actions']['cancel'] = array(
+            '#type' => 'button',
+            '#value' => t('Cancel'),
+            '#markup' => l(t('Cancel'), 'admin/config/system/bigbluebuttonbn/meeting/list'),
+        );
+    
     return $form;
 
 }
