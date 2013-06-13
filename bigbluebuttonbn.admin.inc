@@ -149,7 +149,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
     $form['actions']['cancel'] = array(
             '#type' => 'button',
             '#value' => t('Cancel'),
-            '#markup' => l(t('Cancel'), 'admin/config/system/bigbluebuttonbn/meeting/list'),
+            '#executes_submit_callback' => true,
         );
     
     return $form;
@@ -160,40 +160,43 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
  * Process the contact category edit page form submission.
  */
 function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
+    
+    if( isset($form_state['input']['op']) && $form_state['input']['op'] == 'Submit' ){
+        if ( $form_state['build_info']['args'][0] == 'add' ) {
+            db_insert('bigbluebuttonbn')
+            ->fields(array(
+                    'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
+                    'meeting_name' => $form_state['values']['meeting_name'],
+                    'attendee_pass' => $form_state['values']['attendee_pass'],
+                    'moderator_pass' => $form_state['values']['moderator_pass'],
+                    'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
+                    'newwindow' => $form_state['values']['newwindow'],
+                    'record' => $form_state['values']['record'],
+                    'duration' => $form_state['values']['duration'],
+                    'description' => $form_state['values']['description'],
+                    'welcome' => $form_state['values']['welcome'],
+            ))
+            ->execute();
+        } else {
+            db_update('bigbluebuttonbn')
+            ->condition('mid', $form_state['build_info']['args'][1])
+            ->fields(array(
+                    'meeting_name' => $form_state['values']['meeting_name'],
+                    'attendee_pass' => $form_state['values']['attendee_pass'],
+                    'moderator_pass' => $form_state['values']['moderator_pass'],
+                    'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
+                    'newwindow' => $form_state['values']['newwindow'],
+                    'record' => $form_state['values']['record'],
+                    'duration' => $form_state['values']['duration'],
+                    'description' => $form_state['values']['description'],
+                    'welcome' => $form_state['values']['welcome'],
+            ))
+            ->execute();
+        }
 
-    if ( $form_state['build_info']['args'][0] == 'add' ) {
-        db_insert('bigbluebuttonbn')
-        ->fields(array(
-                'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
-                'meeting_name' => $form_state['values']['meeting_name'],
-                'attendee_pass' => $form_state['values']['attendee_pass'],
-                'moderator_pass' => $form_state['values']['moderator_pass'],
-                'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                'newwindow' => $form_state['values']['newwindow'],
-                'record' => $form_state['values']['record'],
-                'duration' => $form_state['values']['duration'],
-                'description' => $form_state['values']['description'],
-                'welcome' => $form_state['values']['welcome'],
-        ))
-        ->execute();
-    } else {
-        db_update('bigbluebuttonbn')
-        ->condition('mid', $form_state['build_info']['args'][1])
-        ->fields(array(
-                'meeting_name' => $form_state['values']['meeting_name'],
-                'attendee_pass' => $form_state['values']['attendee_pass'],
-                'moderator_pass' => $form_state['values']['moderator_pass'],
-                'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                'newwindow' => $form_state['values']['newwindow'],
-                'record' => $form_state['values']['record'],
-                'duration' => $form_state['values']['duration'],
-                'description' => $form_state['values']['description'],
-                'welcome' => $form_state['values']['welcome'],
-        ))
-        ->execute();
+        drupal_set_message(t('Meeting room %meeting_name has been saved.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+        
     }
-
-    drupal_set_message(t('Meeting room %meeting_name has been saved.', array('%meeting_name' => $form_state['values']['meeting_name'])));
     
     $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
 
