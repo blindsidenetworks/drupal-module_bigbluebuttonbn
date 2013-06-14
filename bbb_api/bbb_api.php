@@ -515,13 +515,15 @@ class BigBlueButtonBN {
 	* 	- If SUCCESS it returns an xml packet
 	* 	- If the FAILED or the server is unreachable returns a string of 'false'
 	*/
-	public static function getMeetingXML( $meetingID, $URL, $SALT ) {
-		$xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::isMeetingRunningURL( $meetingID, $URL, $SALT ) );
-		if( $xml && $xml->returncode == 'SUCCESS') 
-			return ( str_replace('</response>', '', str_replace("<?xml version=\"1.0\"?>\n<response>", '', $xml->asXML())));
-		else
-			return 'false';	
-	}
+    public static function getMeetingXML( $meetingID, $URL, $SALT ) {
+        $xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::isMeetingRunningURL( $meetingID, $URL, $SALT ) );
+        $response = '<response><returncode>FAILED</returncode><running>false</running></response>';
+        
+        if( $xml && $xml->returncode == 'SUCCESS') 
+            $response = $xml->asXML();
+        
+        return $response;
+    }
 
 	
 	// TODO: WRITE AN ITERATOR WHICH GOES OVER WHATEVER IT IS BEING TOLD IN THE API AND LIST INFORMATION
@@ -624,6 +626,7 @@ class BigBlueButtonBN {
 		return ($base_url_record.$params."&checksum=".sha1("getRecordings".$params.$SALT) );
 	}
 
+	
 	/**
 	*This method calls getMeetings on the bigbluebuttonbn server, then calls getMeetingInfo for each meeting and concatenates the result.
 	*
@@ -637,41 +640,47 @@ class BigBlueButtonBN {
 		  moderatorPW, attendeePW, hasBeenForciblyEnded, running.
 	*/
 	public static function getRecordingsArray($meetingID, $URL, $SALT ) {
-            $xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::getRecordingsURL( $meetingID, $URL, $SALT ) );
-            if( $xml && $xml->returncode == 'SUCCESS' && $xml->messageKey ) {//The meetings were returned
-                return array('returncode' => (string) $xml->returncode, 'message' => (string) $xml->message, 'messageKey' => (string) $xml->messageKey);
-            } else if($xml && $xml->returncode == 'SUCCESS'){ //If there were meetings already created
-		$recordings = array();
-			
-		foreach ($xml->recordings->recording as $recording) {
-                    $recordings[(string) $recording->recordID] = array( 'recordID' => (string) $recording->recordID, 'meetingID' => (string) $recording->meetingID, 'meetingName' => (string) $recording->name, 'published' => (string) $recording->published, 'startTime' => (string) $recording->startTime, 'endTime' => (string) $recording->endTime );
-                    $recordings[(string) $recording->recordID]['playbacks'] = array();
-                    foreach ( $recording->playback->format as $format ){
-                        $recordings[(string) $recording->recordID]['playbacks'][(string) $format->type] = array( 'type' => (string) $format->type, 'url' => (string) $format->url );
-                    }
-                    // THIS IS FOR TESTING MULTIPLE FORMATS, DO REMOVE IT FOR FINAL RELEASE
-                    //$recordings[(string) $recording->recordID]['playbacks']['desktop'] = array( 'type' => 'desktop', 'url' => (string) $recording->playback->format->url );
-                    
-                    //Add the metadata to the recordings array
-                    $metadata = get_object_vars($recording->metadata);
-                    while ($data = current($metadata)) {
-                        $recordings[(string) $recording->recordID]['meta_'.key($metadata)] = $data;
-                        next($metadata);
-                    }
-		}
-                
-                ksort($recordings);
-
-		return $recordings;
-
-            } else if( $xml ) { //If the xml packet returned failure it displays the message to the user
-		return array('returncode' => (string) $xml->returncode, 'message' => (string) $xml->message, 'messageKey' => (string) $xml->messageKey);
-            } else { //If the server is unreachable, then prompts the user of the necessary action
-		return NULL;
-            }
+	    $xml = BigBlueButtonBN::_wrap_simplexml_load_file( BigBlueButtonBN::getRecordingsURL( $meetingID, $URL, $SALT ) );
+	    if( $xml && $xml->returncode == 'SUCCESS' && $xml->messageKey ) {//The meetings were returned
+	        return array('returncode' => (string)$xml->returncode, 'message' => (string)$xml->message, 'messageKey' => (string) $xml->messageKey);
+	    } else if($xml && $xml->returncode == 'SUCCESS'){ //If there were meetings already created
+	        $recordings = array();
+	
+	        foreach ($xml->recordings->recording as $recording) {
+	            $playbackArray = array();
+	            foreach ( $recording->playback->format as $format ){
+	                $playbackArray[(string) $format->type] = array( 'type' => (string) $format->type, 'url' => (string) $format->url );
+	            }
+	        
+	            //Add the metadata to the recordings array
+	            $metadataArray = array();
+	            $metadata = get_object_vars($recording->metadata);
+	            foreach ($metadata as $key => $value) {
+	                if(is_object($value)) $value = '';
+	                $metadataArray['meta_'.$key] = $value;
+	            }
+	            $recordings[] = array( 'recordID' => (string) $recording->recordID, 'meetingID' => (string) $recording->meetingID, 'meetingName' => (string) $recording->name, 'published' => (string) $recording->published, 'startTime' => (string) $recording->startTime, 'endTime' => (string) $recording->endTime, 'playbacks' => $playbackArray ) + $metadataArray;
+	
+	        }
+	
+	        usort($recordings, 'BigBlueButtonBN::recordingBuildSorter');
+	        return array('returncode' => (string)$xml->returncode, 'message' => (string)$xml->message, 'messageKey' => (string)$xml->messageKey, 'recordings' => $recordings);
+	        
+	    } else if( $xml ) { //If the xml packet returned failure it displays the message to the user
+	        return array('returncode' => (string)$xml->returncode, 'message' => (string)$xml->message, 'messageKey' => (string)$xml->messageKey);
+	    } else { //If the server is unreachable, then prompts the user of the necessary action
+	        return NULL;
+	    }
+	}
+	
+	
+	private static function recordingBuildSorter($a, $b){
+	    if( $a['startTime'] < $b['startTime']) return -1;
+	    else if( $a['startTime'] == $b['startTime']) return 0;
+	    else return 1;
 	}
 
-
+	
 	public static function getDeleteRecordingsURL( $recordID, $URL, $SALT ) {
 		$url_delete = $URL."api/deleteRecordings?";
 		$params = 'recordID='.urlencode($recordID);
@@ -690,8 +699,7 @@ class BigBlueButtonBN {
 		return true;
 	}
 
-
-
+	
 	public static function getPublishRecordingsURL( $recordID, $set, $URL, $SALT ) {
 		$url_delete = $URL."api/publishRecordings?";
 		$params = 'recordID='.$recordID."&publish=".$set;
@@ -735,7 +743,7 @@ class BigBlueButtonBN {
 	}
         
         
-        public function _wrap_simplexml_load_file($url){
+        public static function _wrap_simplexml_load_file($url){
 	
             if (extension_loaded('curl')) {
                 $ch = curl_init() or die ( curl_error() );

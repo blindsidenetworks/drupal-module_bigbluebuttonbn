@@ -96,7 +96,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description' => t("Example: 'mp' . To specify the password moderators should use to access the room. Moderators have access to the presentation module and features to control the meeting."),
             '#required' => TRUE,
   		);
-/*
+    
     $form['wait_for_moderator'] = array(
             '#type' => 'checkbox',
             '#title' => t('Wait for moderator to start meeting.'),
@@ -104,19 +104,29 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description'   => t('Checking this box it will be required a moderator in the meeting in order to allow attendees get into.'),
   		);
 
+    /*
     $form['newwindow'] = array(
             '#type' => 'checkbox',
             '#title' => t('Open meeting in a new window.'),
             '#default_value' => $meeting['newwindow'],
             '#description'   => t('Checking this box it will open a new window to join meetings.'),
   		);
-*/
+    */
+    
     $form['record'] = array(
             '#type' => 'checkbox',
             '#title' => t('Playback recording for meeting on/off.'),
             '#default_value' => $meeting['record'],
             '#description'   => t('Checking this box it will activate the playback recording for the current meeting.'),
   		);
+    
+    $form['duration'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Duration'),
+            '#maxlength' => 3,
+            '#default_value' => $meeting['duration'],
+            '#description' => t("Set the duration in minutes expected for the meeting to last. After this time all the users will be kicked out."),
+    );
 
     $form['description'] = array(
             '#type' => 'textfield',
@@ -138,7 +148,12 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#type' => 'submit',
             '#value' => t('Submit'),
   		);
-
+    $form['actions']['cancel'] = array(
+            '#type' => 'button',
+            '#value' => t('Cancel'),
+            '#executes_submit_callback' => true,
+        );
+    
     return $form;
 
 }
@@ -147,38 +162,44 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
  * Process the contact category edit page form submission.
  */
 function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
+    
+    if( isset($form_state['input']['op']) && $form_state['input']['op'] == 'Submit' ){
+        if ( $form_state['build_info']['args'][0] == 'add' ) {
+            db_insert('bigbluebuttonbn')
+            ->fields(array(
+                    'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
+                    'meeting_name' => $form_state['values']['meeting_name'],
+                    'attendee_pass' => $form_state['values']['attendee_pass'],
+                    'moderator_pass' => $form_state['values']['moderator_pass'],
+                    'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
+                    'newwindow' => isset($form_state['values']['newwindow'])? $form_state['values']['newwindow']: 0,
+                    'record' => $form_state['values']['record'],
+                    'duration' => $form_state['values']['duration'],
+                    'description' => $form_state['values']['description'],
+                    'welcome' => $form_state['values']['welcome'],
+            ))
+            ->execute();
+        } else {
+            db_update('bigbluebuttonbn')
+            ->condition('mid', $form_state['build_info']['args'][1])
+            ->fields(array(
+                    'meeting_name' => $form_state['values']['meeting_name'],
+                    'attendee_pass' => $form_state['values']['attendee_pass'],
+                    'moderator_pass' => $form_state['values']['moderator_pass'],
+                    'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
+                    'newwindow' => isset($form_state['values']['newwindow'])? $form_state['values']['newwindow']: 0,
+                    'record' => $form_state['values']['record'],
+                    'duration' => $form_state['values']['duration'],
+                    'description' => $form_state['values']['description'],
+                    'welcome' => $form_state['values']['welcome'],
+            ))
+            ->execute();
+        }
 
-    if ( $form_state['build_info']['args'][0] == 'add' ) {
-        db_insert('bigbluebuttonbn')
-        ->fields(array(
-                'meeting_id' => bigbluebuttonbn_rand_string( 16 ),
-                'meeting_name' => $form_state['values']['meeting_name'],
-                'attendee_pass' => $form_state['values']['attendee_pass'],
-                'moderator_pass' => $form_state['values']['moderator_pass'],
-                'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                'newwindow' => $form_state['values']['newwindow'],
-                'record' => $form_state['values']['record'],
-                'description' => $form_state['values']['description'],
-                'welcome' => $form_state['values']['welcome'],
-        ))
-        ->execute();
-    } else {
-        db_update('bigbluebuttonbn')
-        ->condition('mid', $form_state['build_info']['args'][1])
-        ->fields(array(
-                'meeting_name' => $form_state['values']['meeting_name'],
-                'attendee_pass' => $form_state['values']['attendee_pass'],
-                'moderator_pass' => $form_state['values']['moderator_pass'],
-                'wait_for_moderator' => $form_state['values']['wait_for_moderator'],
-                'newwindow' => $form_state['values']['newwindow'],
-                'record' => $form_state['values']['record'],
-                'description' => $form_state['values']['description'],
-                'welcome' => $form_state['values']['welcome'],
-        ))
-        ->execute();
+        drupal_set_message(t('Meeting room %meeting_name has been saved.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+        
     }
-
-    drupal_set_message(t('Meeting room %meeting_name has been saved.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+    
     $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
 
 }
@@ -388,8 +409,15 @@ function bigbluebuttonbn_admin_recording_list() {
     // Initialize rows array
     $rows = array();
 
+    // Initializes recordng list array.
+    $recordings = array();
     // Get all the recordings from the database.
-    $recordings = bigbluebuttonbn_getAllRecordings();
+    $recordingsArray = bigbluebuttonbn_getAllRecordings();
+    //debug($recordingsArray);
+    if( $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
+        $recordings = $recordingsArray['recordings'];
+    }
+    
     //debug($recordings);
     // Loop through the meeting rooms and add them to the table.
     foreach ($recordings as $recording) {
@@ -402,7 +430,6 @@ function bigbluebuttonbn_admin_recording_list() {
         
         /// Prepare actionbar
         $bloginfourl = '.';
-        $actionbar = '';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
         $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
         $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
@@ -431,8 +458,7 @@ function bigbluebuttonbn_admin_recording_list() {
                 $type,
                 $recording['meetingName'],
                 $formatedStartDate,
-                ''.$duration.' min',
-                $actionbar,
+                $duration.' min',
                 $publishLink,
                 $deleteLink
         );
@@ -515,8 +541,8 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
 
     drupal_set_message(t('Recording selected has been published.'));
 
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/recording';
-
+    header('Location: ./?q=admin/config/system/bigbluebuttonbn/recording' );
+    
 }
 
 /**
@@ -534,8 +560,8 @@ function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
     
     drupal_set_message(t('Recording selected has been unpublished.'));
 
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/recording';
-
+    header('Location: ./?q=admin/config/system/bigbluebuttonbn/recording' );
+    
 }
 
 
@@ -548,11 +574,13 @@ function bigbluebuttonbn_joinMeeting($meeting){
     $moderatorPW = $meeting['moderator_pass'];
     $attendeePW = $meeting['attendee_pass'];
     $welcome = $meeting['welcome'];
-    $welcome = ( !isset($meeting['welcome']) || $meeting['welcome'] == '')? "Welcome to [$meetingName] Meeting Room.": $meeting['welcome'];
+    $welcome = (( !isset($meeting['welcome']) || $meeting['welcome'] == '')? "Welcome to [$meetingName] Meeting Room.": $meeting['welcome'])."<br>";
     $record = $meeting['record'] == 1? 'true': 'false';
-    $welcome .= $record == 'true'? "<br><br> <b>This meeting has been recorded.</b><br>": '';
+    $welcome .= $record == 'true'? "<br><b>This meeting is being recorded.</b><br>": '';
+    $duration = $meeting['duration'];
+    $welcome .= $duration > 0? "<br><b>The maximum duration for this meeting is ".$duration." minutes.</b><br>": '';
     $description = $meeting['description'];
-
+    
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
     $logoutURL = $GLOBALS['base_url'];
@@ -567,7 +595,7 @@ function bigbluebuttonbn_joinMeeting($meeting){
     } else {
         //Calls create meeting on the bigbluebutton server
         if ( !BigBlueButtonBN::isMeetingCreated( $meetingID, $URL, $SALT ) ){
-            $response = BigBlueButtonBN::createMeetingArray($meetingName, $meetingID, $attendeePW, $moderatorPW,  $URL, $SALT, $logoutURL, $welcome, $record, 0, 0, array("meta_description" => $description, "meta_email" => '') );
+            $response = BigBlueButtonBN::createMeetingArray($meetingName, $meetingID, $attendeePW, $moderatorPW,  $URL, $SALT, $logoutURL, $welcome, $record, $duration, 0, array("meta_description" => $description, "meta_email" => '') );
 
             //Analyzes the bigbluebutton server's response
             if(!$response){//If the server is unreachable, then prompts the user of the necessary action
@@ -615,13 +643,14 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
             'wait_for_moderator' => 0,
             'newwindow' => 0,
             'record' => 0,
+            'duration' => 0,
             'description' => '',
             'welcome' => '',
     );
     
     if ( $mid != NULL ) {
         $results = db_select('bigbluebuttonbn', 'm')
-        ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'description', 'welcome'))
+        ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
         ->condition('mid', $mid, '=')
         ->orderBy('meeting_name')
         ->execute()
@@ -637,6 +666,7 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
                     'wait_for_moderator' => $results[0]->wait_for_moderator,
                     'newwindow' => $results[0]->newwindow,
                     'record' => $results[0]->record,
+                    'duration' => $results[0]->duration,
                     'description' => $results[0]->description,
                     'welcome' => $results[0]->welcome,
             );
@@ -651,7 +681,7 @@ function bigbluebuttonbn_getMeeting($mid = NULL) {
 function bigbluebuttonbn_getAllMeetings() {
 
     $results = db_select('bigbluebuttonbn', 'm')
-    ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'description', 'welcome'))
+    ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
     ->orderBy('meeting_name')
     ->execute()
     ->fetchAll();
@@ -666,6 +696,7 @@ function bigbluebuttonbn_getAllMeetings() {
                 'wait_for_moderator' => $rowset->wait_for_moderator,
                 'newwindow' => $rowset->newwindow,
                 'record' => $rowset->record,
+                'duration' => $rowset->duration,
                 'description' => $rowset->description,
                 'welcome' => $rowset->welcome,
         );
@@ -680,13 +711,13 @@ function bigbluebuttonbn_getAllRecordings() {
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
     
     $results = db_select('bigbluebuttonbn_logs', 'm')
-    ->fields('m', array('id', 'meeting_id', 'record', 'timestamp', 'event'))
-    ->distinct()
-    ->condition('event', 'Create', '=')
-    ->condition('record', 1, '=')
-    ->orderBy('timestamp')
-    ->execute()
-    ->fetchAll();
+        ->fields('m', array('id', 'meeting_id', 'record', 'timestamp', 'event'))
+        ->distinct()
+        ->condition('event', 'Create', '=')
+        ->condition('record', 1, '=')
+        ->orderBy('timestamp')
+        ->execute()
+        ->fetchAll();
 
     $meetingIds = '';
     foreach( $results as $rowset ) {
