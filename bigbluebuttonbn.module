@@ -247,7 +247,7 @@ function bigbluebuttonbn_admin_settings_submit($form, $form_state) {
  */
 function bigbluebuttonbn_block_info() {
     $blocks['bigbluebuttonbn'] = array(
-            'info'                  => t('BigBlueButtonBN Block'),
+            'info'                  => t('BigBlueButtonBN'),
             'cache'                 => DRUPAL_NO_CACHE, 
             //'status'              => FALSE,			    //Activate this line before launch the beta release
             'status'                => TRUE,   			    //Delete this line before launch the beta release
