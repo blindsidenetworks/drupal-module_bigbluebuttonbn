@@ -51,10 +51,10 @@ function bigbluebuttonbn_help($path, $arg) {
             $output .= '<dd>' . t('If you...') . '</dd>';
             $output .= '</dl>';
             return $output;
-        case 'admin/config/system/bigbluebuttonbn':
+        case 'admin/config/content/bigbluebuttonbn':
             $output = '<p>' . t('Set up the general configuration on this page.') . '</p>';
             return $output;
-        case 'admin/config/system/bigbluebuttonbn/meeting':
+        case 'admin/config/content/bigbluebuttonbn/meeting':
             $output = '<p>' . t('Add, edit, delete, enable/disable meeting rooms on this page.') . '</p>';
             return $output;
     }
@@ -78,7 +78,7 @@ function bigbluebuttonbn_permission() {
  * Implements hook_menu()
  */
 function bigbluebuttonbn_menu() {
-    $items['admin/config/system/bigbluebuttonbn'] = array(
+    $items['admin/config/content/bigbluebuttonbn'] = array(
             'title'            => 'BigBlueButtonBN',
             'description'      => 'Set parameters to enable web conferencing system connectivity.',
             'page callback'    => 'drupal_get_form',
@@ -87,13 +87,13 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
-    $items['admin/config/system/bigbluebuttonbn/settings'] = array(
+    $items['admin/config/content/bigbluebuttonbn/settings'] = array(
             'title'            => 'General settings',
             'weight'           => -2,
             'type'             => MENU_DEFAULT_LOCAL_TASK,
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting'] = array(
             'title'            => 'Meetings',
             'page callback'    => 'bigbluebuttonbn_admin_meeting_list',
             'weight'           => -1,
@@ -102,12 +102,12 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/list'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/list'] = array(
             'title'            => 'List',
             'type'             => MENU_DEFAULT_LOCAL_TASK,
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/add'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/add'] = array(
             'title'            => 'Add Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'add'),
@@ -117,7 +117,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/edit'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/edit'] = array(
             'title'            => 'Edit Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'edit'),
@@ -126,7 +126,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/delete'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/delete'] = array(
             'title'            => 'Delete Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
@@ -134,7 +134,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/join'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/join'] = array(
             'title'            => 'Join Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_join'),
@@ -142,7 +142,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
-    $items['admin/config/system/bigbluebuttonbn/meeting/end'] = array(
+    $items['admin/config/content/bigbluebuttonbn/meeting/end'] = array(
             'title'            => 'End Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_end_form'),
@@ -150,7 +150,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
-    $items['admin/config/system/bigbluebuttonbn/recording'] = array(
+    $items['admin/config/content/bigbluebuttonbn/recording'] = array(
             'title'            => 'Recordings',
             'page callback'    => 'bigbluebuttonbn_admin_recording_list',
             'weight'           => -1,
@@ -159,12 +159,12 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
-    $items['admin/config/system/bigbluebuttonbn/recording/list'] = array(
+    $items['admin/config/content/bigbluebuttonbn/recording/list'] = array(
             'title'            => 'List',
             'type'             => MENU_DEFAULT_LOCAL_TASK,
         );
 
-    $items['admin/config/system/bigbluebuttonbn/recording/show'] = array(
+    $items['admin/config/content/bigbluebuttonbn/recording/show'] = array(
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_show'),
@@ -172,7 +172,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
-    $items['admin/config/system/bigbluebuttonbn/recording/hide'] = array(
+    $items['admin/config/content/bigbluebuttonbn/recording/hide'] = array(
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_hide'),
@@ -180,7 +180,7 @@ function bigbluebuttonbn_menu() {
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
-    $items['admin/config/system/bigbluebuttonbn/recording/delete'] = array(
+    $items['admin/config/content/bigbluebuttonbn/recording/delete'] = array(
             'title'            => 'Delete Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_delete_form'),
@@ -584,8 +584,8 @@ function bigbluebuttonbn_recording_list() {
         /// Prepare actionbar
         $bloginfourl = '.';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
-        $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
-        $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
+        $publishLink = l(t($action), 'admin/config/content/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
+        $deleteLink = l(t('Delete'), 'admin/config/content/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
         
         /// Prepare duration
         $endTime = isset($recording['endTime'])? intval(str_replace('"', '\"', $recording['endTime'])):0;

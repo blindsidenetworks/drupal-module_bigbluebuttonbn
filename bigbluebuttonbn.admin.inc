@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Versions:
 7.x-1.0.x-dev	--  	Initial version written by Jesus Federico
-(email : jesus [a t ] b l i n d si de n  et w o rks DOT ca)
+(email : jesus [a t ] b l i n d si de n  et w o rks DOT com)
  
 */
 
@@ -200,7 +200,7 @@ function bigbluebuttonbn_admin_meeting_form_submit($form, &$form_state) {
         
     }
     
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
+    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/meeting';
 
 }
 
@@ -244,10 +244,10 @@ function bigbluebuttonbn_admin_meeting_list() {
                 check_plain($meeting->moderator_pass),
 
                 (BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $URL, $SALT) ? "Running" : "Not running"),
-                l(t('Edit'), 'admin/config/system/bigbluebuttonbn/meeting/edit/' . $meeting->mid),
-                l(t('Delete'), 'admin/config/system/bigbluebuttonbn/meeting/delete/' . $meeting->mid),
-                l(t('Join'), 'admin/config/system/bigbluebuttonbn/meeting/join/' . $meeting->mid),
-                BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $URL, $SALT) ? l(t('End'), 'admin/config/system/bigbluebuttonbn/meeting/end/' . $meeting->mid): ''
+                l(t('Edit'), 'admin/config/content/bigbluebuttonbn/meeting/edit/' . $meeting->mid),
+                l(t('Delete'), 'admin/config/content/bigbluebuttonbn/meeting/delete/' . $meeting->mid),
+                l(t('Join'), 'admin/config/content/bigbluebuttonbn/meeting/join/' . $meeting->mid),
+                BigBlueButtonBN::isMeetingRunning((string) $meeting->meeting_id, $URL, $SALT) ? l(t('End'), 'admin/config/content/bigbluebuttonbn/meeting/end/' . $meeting->mid): ''
         );
     }
 
@@ -284,7 +284,7 @@ function bigbluebuttonbn_admin_meeting_delete_form($form, &$form_state,  $meetin
     return confirm_form(
             $form,
             t('Are you sure you want to delete %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            'admin/config/system/bigbluebuttonbn/meeting',
+            'admin/config/content/bigbluebuttonbn/meeting',
             t('This action cannot be undone.'),
             t('Delete'),
             t('Cancel')
@@ -304,7 +304,7 @@ function bigbluebuttonbn_admin_meeting_delete_form_submit($form, &$form_state) {
 
     drupal_set_message(t('Meeting room %meeting_name has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
 
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
+    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/meeting';
 
 }
 
@@ -332,7 +332,7 @@ function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $meeting_i
     return confirm_form(
             $form,
             t('Are you sure you want to end %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            'admin/config/system/bigbluebuttonbn/meeting',
+            'admin/config/content/bigbluebuttonbn/meeting',
             t('This action cannot be undone.'),
             t('End'),
             t('Cancel')
@@ -371,7 +371,7 @@ function bigbluebuttonbn_admin_meeting_end_form_submit($form, &$form_state) {
 
     }
 
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/meeting';
+    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/meeting';
 
 }
 
@@ -414,7 +414,7 @@ function bigbluebuttonbn_admin_recording_list() {
     // Get all the recordings from the database.
     $recordingsArray = bigbluebuttonbn_getAllRecordings();
     //debug($recordingsArray);
-    if( $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
+    if( $recordingsArray && $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
         $recordings = $recordingsArray['recordings'];
     }
     
@@ -431,8 +431,8 @@ function bigbluebuttonbn_admin_recording_list() {
         /// Prepare actionbar
         $bloginfourl = '.';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
-        $publishLink = l(t($action), 'admin/config/system/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
-        $deleteLink = l(t('Delete'), 'admin/config/system/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
+        $publishLink = l(t($action), 'admin/config/content/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
+        $deleteLink = l(t('Delete'), 'admin/config/content/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
         
         /// Prepare duration
         $endTime = isset($recording['endTime'])? intval(str_replace('"', '\"', $recording['endTime'])):0;
@@ -498,7 +498,7 @@ function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meet
     return confirm_form(
             $form,
             t('Are you sure you want to delete %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            'admin/config/system/bigbluebuttonbn/recording',
+            'admin/config/content/bigbluebuttonbn/recording',
             t('This action cannot be undone.'),
             t('Delete'),
             t('Cancel')
@@ -521,7 +521,7 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
 
     drupal_set_message(t('Recording selected has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
 
-    $form_state['redirect'] = 'admin/config/system/bigbluebuttonbn/recording';
+    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/recording';
 
 }
 
@@ -541,7 +541,7 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
 
     drupal_set_message(t('Recording selected has been published.'));
 
-    header('Location: ./?q=admin/config/system/bigbluebuttonbn/recording' );
+    header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
     
 }
 
@@ -560,7 +560,7 @@ function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
     
     drupal_set_message(t('Recording selected has been unpublished.'));
 
-    header('Location: ./?q=admin/config/system/bigbluebuttonbn/recording' );
+    header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
     
 }
 

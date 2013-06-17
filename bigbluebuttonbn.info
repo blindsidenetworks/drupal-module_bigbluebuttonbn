@@ -9,4 +9,4 @@ files[] = pix/polling.gif
 core = "7.x"
 version = "7.x-1.0.8-dev"
 project = "bigbluebuttonbn"
-configure = admin/config/system/bigbluebuttonbn/settings
+configure = admin/config/content/bigbluebuttonbn/settings
