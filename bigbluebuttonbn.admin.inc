@@ -149,10 +149,14 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#value' => t('Submit'),
   		);
     $form['actions']['cancel'] = array(
-            '#type' => 'button',
+            //To be shown as a default cancel link in drupal 
+            '#type' => 'markup',
+            '#markup' => l(t('Cancel'), 'admin/config/content/bigbluebuttonbn/meeting'),
+            //To be shown as a submit button
+            //'#type' => 'button',
+            //'#executes_submit_callback' => true,
             '#value' => t('Cancel'),
-            '#executes_submit_callback' => true,
-        );
+    );
     
     return $form;
 
@@ -541,8 +545,8 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
 
     drupal_set_message(t('Recording selected has been published.'));
 
-    header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    
+    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
+    drupal_goto('admin/config/content/bigbluebuttonbn/recording');
 }
 
 /**
@@ -560,8 +564,8 @@ function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
     
     drupal_set_message(t('Recording selected has been unpublished.'));
 
-    header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    
+    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
+    drupal_goto('admin/config/content/bigbluebuttonbn/recording');
 }
 
 
