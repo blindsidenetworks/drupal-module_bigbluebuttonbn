@@ -66,12 +66,50 @@ function bigbluebuttonbn_help($path, $arg) {
  */
 function bigbluebuttonbn_permission() {
     return array(
-            'access application form' => array(
-                    'title' => t('BigBlueButtonBN form access'),
-                    'description' => t('Allow users access the bigbluebutton form'),
+            'administer bigbluebuttonbn' => array(
+                    'title' => t('Administer BigBluebuttonBN'),
+                    'description' => t('Generally an administrative permission. Warning: Give to trusted roles only; this permission has security implications.'),
             ),
-        );
+            'access bigbluebuttonbn meetings' => array(
+                    'title' => t('Join meeting room'),
+                    'description' => t('Allow users to access meeting rooms'),
+            ),
+            'moderate bigbluebuttonbn meetings' => array(
+                    'title' => t('Join as moderator'),
+                    'description' => t('Allow users to access meeting rooms as moderator'),
+            ),
+            'directaccess bigbluebuttonbn meetings' => array(
+                    'title' => t('No password required'),
+                    'description' => t('Allow users to join meetings without providing a password'),
+            ),
+            'publish bigbluebuttonbn recordings' => array(
+                    'title' => t('Publish/Unpublish recordings'),
+                    'description' => t('Allow users to publish/unpublish recordings'),
+            ),
+            'delete bigbluebuttonbn recordings' => array(
+                    'title' => t('Delete recordings'),
+                    'description' => t('Allow users to publish/unpublish recordings'),
+            ),
+    );
 }
+
+
+function bigbluebuttonbn_access($op, $node, $account) {
+
+    if ($op == 'access') {
+        return user_access('access bigbluebuttonbn meetings', $account);
+    }
+
+    if ($op == 'moderate') {
+        return user_access('moderate bigbluebuttonbn meetings', $account);
+    }
+
+    if ($op == 'directaccess') {
+        return user_access('directaccess bigbluebuttonbn meetings', $account);
+    }
+    
+}
+
 
 
 /**
@@ -83,7 +121,7 @@ function bigbluebuttonbn_menu() {
             'description'      => 'Set parameters to enable web conferencing system connectivity.',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_settings'),
-            'access arguments' => array('administer bigbluebuttonbn module'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -98,7 +136,7 @@ function bigbluebuttonbn_menu() {
             'page callback'    => 'bigbluebuttonbn_admin_meeting_list',
             'weight'           => -1,
             'type'             => MENU_LOCAL_TASK,
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
@@ -113,7 +151,7 @@ function bigbluebuttonbn_menu() {
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'add'),
             'type'             => MENU_LOCAL_TASK + MENU_CONTEXT_INLINE,
             'weight'           => 3,
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
@@ -122,7 +160,7 @@ function bigbluebuttonbn_menu() {
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_form', 'edit'),
             'weight'           => 3,
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
@@ -130,7 +168,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Delete Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_delete_form'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -138,7 +176,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Join Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_join'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
   		);
 
@@ -146,7 +184,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'End Meeting',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_meeting_end_form'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -155,7 +193,7 @@ function bigbluebuttonbn_menu() {
             'page callback'    => 'bigbluebuttonbn_admin_recording_list',
             'weight'           => -1,
             'type'             => MENU_LOCAL_TASK,
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -168,7 +206,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_show'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
@@ -176,7 +214,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_hide'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
@@ -184,7 +222,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Delete Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_delete_form'),
-            'access arguments' => array('administer site configuration'),
+            'access arguments' => array('administer bigbluebuttonbn'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -215,7 +253,7 @@ function bigbluebuttonbn_menu() {
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_page_join_form'),
             'access callback'  => 'user_access',
-            'access arguments' => array('access application form'),
+            'access arguments' => array('access bigbluebuttonbn meetings'),
             //'type'             => MENU_SUGGESTED_ITEM,
             'type'             => MENU_NORMAL_ITEM,
         );
@@ -292,7 +330,10 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
 
     $bigbluebuttonbn_password_disabled = FALSE;
     $bigbluebuttonbn_showPassword = 'true';
-    if ( in_array("bbb attendee", $user->roles) || in_array("bbb moderator", $user->roles) ){
+    
+    $roles = array_map('check_plain', user_roles(TRUE));
+    
+    if ( user_access('directaccess bigbluebuttonbn meetings') ){
         $bigbluebuttonbn_password_disabled = TRUE;
         $bigbluebuttonbn_showPassword = 'false';
     }
@@ -354,13 +395,16 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
         $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
 
     //get meeting info
-    if ( in_array("bbb attendee", $user->roles) )
-        $meeting['user_password'] = $meeting['attendee_pass'];
-    else if ( in_array("bbb moderator", $user->roles) )
-        $meeting['user_password'] = $meeting['moderator_pass'];
-    else
+    if ( user_access('directaccess bigbluebuttonbn meetings') ) {
+        if ( user_access('moderate bigbluebuttonbn meetings') ) {
+            $meeting['user_password'] = $meeting['moderator_pass'];
+        } else {
+            $meeting['user_password'] = $meeting['attendee_pass'];
+        }
+    } else {
         $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
-
+    }
+    
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
 	if ( $bbb_joinURL != NULL ){
 	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
@@ -391,11 +435,12 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
 
     $bigbluebuttonbn_password_disabled = FALSE;
     $bigbluebuttonbn_showPassword = 'true';
-    if ( in_array("bbb attendee", $user->roles) || in_array("bbb moderator", $user->roles) ){
+    if ( user_access('directaccess bigbluebuttonbn meetings') ){
         $bigbluebuttonbn_password_disabled = TRUE;
         $bigbluebuttonbn_showPassword = 'false';
     }
-
+    
+    
     //Form definition starts
     $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showName'] = array(
             '#type' => 'hidden',
@@ -453,12 +498,15 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
         $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
 
     //get meeting info
-    if ( in_array("bbb attendee", $user->roles) )
-        $meeting['user_password'] = $meeting['attendee_pass'];
-    else if ( in_array("bbb moderator", $user->roles) )
-        $meeting['user_password'] = $meeting['moderator_pass'];
-    else
+    if ( user_access('directaccess bigbluebuttonbn meetings') ) {
+        if ( user_access('moderate bigbluebuttonbn meetings') ) {
+            $meeting['user_password'] = $meeting['moderator_pass'];
+        } else {
+            $meeting['user_password'] = $meeting['attendee_pass'];
+        }
+    } else {
         $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
+    }
 
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
 	if ( $bbb_joinURL != NULL ){
@@ -739,13 +787,16 @@ function bigbluebuttonbn_recordings_response_original($action, $meetingnameencod
 
 function bigbluebuttonbn_ismoderator(){
     $user = $GLOBALS['user'];
-
+    return user_access('moderate bigbluebuttonbn meetings');
+    
     //get meeting info
-    if ( in_array("bbb moderator", $user->roles) || in_array("administrator", $user->roles) )
-        return true;
-    else
-        return false;
+    //if ( in_array("bbb moderator", $user->roles) || in_array("administrator", $user->roles) )
+    //    return true;
+    //else
+    //    return false;
 
 }
+
+
 
 ?>

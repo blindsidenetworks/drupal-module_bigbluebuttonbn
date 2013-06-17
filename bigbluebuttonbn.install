@@ -211,8 +211,8 @@ function bigbluebuttonbn_install() {
     // Default roles to access meeting rooms
     $roles = array_map('check_plain', user_roles(TRUE));
 
-    if (!array_key_exists('bbb attendee', $roles)) {
-        $role = (object) array('name' => t('bbb attendee'));
+    if (!array_key_exists('bbb viewer', $roles)) {
+        $role = (object) array('name' => t('bbb viewer'));
         user_role_save($role);
     }
     if (!array_key_exists('bbb moderator', $roles)) {
@@ -237,7 +237,7 @@ function bigbluebuttonbn_uninstall() {
     ->fetchAll();
 
     foreach( $roles as $role ){
-        if ( $role->name == 'bbb attendee' || $role->name == 'bbb moderator' ){
+        if ( $role->name == 'bbb viewer' || $role->name == 'bbb moderator' ){
             user_role_delete((int) $role->rid);
         }
     }
