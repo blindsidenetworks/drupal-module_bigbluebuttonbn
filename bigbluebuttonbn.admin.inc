@@ -81,7 +81,7 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
 
     $form['attendee_pass'] = array(
             '#type' => 'textfield',
-            '#title' => t('Attendee password'),
+            '#title' => t('Viewer password'),
             '#maxlength' => 25,
             '#default_value' => $meeting['attendee_pass'],
             '#description' => t("Example: 'ap' . To specify the password regular attendees should use to access the room."),
@@ -221,7 +221,7 @@ function bigbluebuttonbn_admin_meeting_list() {
     // Initialize table headers
     $header = array(
             t('Meeting room'),
-            t('Attendee password'),
+            t('Viewer password'),
             t('Moderator password'),
             t('Status'),
             array('data' => t('Operations'), 'colspan' => 4),
