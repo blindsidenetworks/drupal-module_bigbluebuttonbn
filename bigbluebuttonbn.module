@@ -82,6 +82,10 @@ function bigbluebuttonbn_permission() {
                     'title' => t('No password required'),
                     'description' => t('Allow users to join meetings without providing a password'),
             ),
+            'access bigbluebuttonbn recordings' => array(
+                    'title' => t('Access recordings'),
+                    'description' => t('Allow users to access recordings'),
+            ),
             'publish bigbluebuttonbn recordings' => array(
                     'title' => t('Publish/Unpublish recordings'),
                     'description' => t('Allow users to publish/unpublish recordings'),
@@ -213,7 +217,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_show'),
-            'access arguments' => array('administer bigbluebuttonbn'),
+            'access arguments' => array('publish bigbluebuttonbn recordings'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
@@ -221,7 +225,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Publish/ Unpublish Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_hide'),
-            'access arguments' => array('administer bigbluebuttonbn'),
+            'access arguments' => array('publish bigbluebuttonbn recordings'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
         
@@ -229,7 +233,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Delete Recording',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_admin_recording_delete_form'),
-            'access arguments' => array('administer bigbluebuttonbn'),
+            'access arguments' => array('delete bigbluebuttonbn recordings'),
             'file'             => 'bigbluebuttonbn.admin.inc',
         );
 
@@ -269,7 +273,7 @@ function bigbluebuttonbn_menu() {
             'page callback'    => 'bigbluebuttonbn_recordings_response',
             'page arguments'   => array(1),
             //'access callback'  => 'bigbluebuttonbn_access_recordings',
-            'access arguments' => array('access bigbluebuttonbn meetings'),
+            'access arguments' => array('access bigbluebuttonbn recordings'),
     );
 
 
@@ -623,8 +627,10 @@ function bigbluebuttonbn_recording_list() {
             t('Meeting Room Name'),
             t('Date'),
             t('Duration'),
-            //array('data' => t('Operations'), 'colspan' => 2),
   		);
+    if( user_access('publish bigbluebuttonbn recordings') || user_access('delete bigbluebuttonbn recordings') ) {
+        array_push($header, array('data' => t('Operations'), 'colspan' => 2));
+    }
     // Initialize rows array
     $rows = array();
 
@@ -633,7 +639,7 @@ function bigbluebuttonbn_recording_list() {
     // Get all the recordings from the database.
     $recordingsArray = bigbluebuttonbn_getAllRecordings();
     //debug($recordingsArray);
-    if( $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
+    if( $recordingsArray && $recordingsArray['returncode'] == 'SUCCESS' && !$recordingsArray['messageKey'] ){
         $recordings = $recordingsArray['recordings'];
     }
     
@@ -677,10 +683,16 @@ function bigbluebuttonbn_recording_list() {
                 $type,
                 $recording['meetingName'],
                 $formatedStartDate,
-                $duration.' min',
-                //$publishLink,
-                //$deleteLink
+                $duration.' min'
         );
+        if( user_access('publish bigbluebuttonbn recordings') ) {
+            array_push($rows[0], $publishLink);
+        }
+        if( user_access('delete bigbluebuttonbn recordings') ) {
+            array_push($rows[0], $deleteLink);
+        }
+        
+        
     }
 
     if (!$rows) {
