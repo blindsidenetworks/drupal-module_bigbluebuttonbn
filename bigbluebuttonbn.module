@@ -715,8 +715,9 @@ function bigbluebuttonbn_joinMeeting($meeting){
 
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
-    $logoutURL = $GLOBALS['base_url'];
-
+    //$logoutURL = $GLOBALS['base_url'];
+    $logoutURL = $_SERVER['HTTP_REFERER'];
+    
     $user_name = $meeting['user_name'];
     $user_password = $meeting['user_password'];
 
