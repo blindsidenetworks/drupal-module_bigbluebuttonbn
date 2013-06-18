@@ -420,7 +420,7 @@ function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meet
     return confirm_form(
             $form,
             t('Are you sure you want to delete %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            'admin/config/content/bigbluebuttonbn/recording',
+            $_SERVER['HTTP_REFERER'],
             t('This action cannot be undone.'),
             t('Delete'),
             t('Cancel')
@@ -443,8 +443,11 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
 
     drupal_set_message(t('Recording selected has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
 
-    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/recording';
-
+    header('Location: '.$_SERVER['HTTP_REFERER'] );
+    //$form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/recording';
+    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
+    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
+    
 }
 
 
@@ -463,8 +466,9 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
 
     drupal_set_message(t('Recording selected has been published.'));
 
+    header('Location: '.$_SERVER['HTTP_REFERER'] );
     //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    drupal_goto('admin/config/content/bigbluebuttonbn/recording');
+    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
 }
 
 /**
@@ -482,8 +486,10 @@ function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
     
     drupal_set_message(t('Recording selected has been unpublished.'));
 
+    header('Location: '.$_SERVER['HTTP_REFERER'] );
     //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    drupal_goto('admin/config/content/bigbluebuttonbn/recording');
+    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
+    
 }
 
 
