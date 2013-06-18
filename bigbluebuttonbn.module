@@ -538,13 +538,13 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
     //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/heartbeat.js');
     //drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/bigbluebuttonbn.js');
     
-    $bigbluebuttonbn_pingURL = $base_root.$base_path.'?q=bigbluebuttonbn/ping/'.$meeting['meeting_id'];
-    //$bigbluebuttonbn_pingURL = 'bigbluebuttonbn/ping/'.$meeting['meeting_id'];
+    //$bigbluebuttonbn_pingURL = $base_root.$base_path.'?q=bigbluebuttonbn/ping/'.$meeting['meeting_id'];
+    $bigbluebuttonbn_pingURL = $base_root.url('bigbluebuttonbn/ping/'.$meeting['meeting_id']);
     $bigbluebuttonbn_joinURL = urldecode($joinURL);
 
-    drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
-    drupal_add_js(array('bigbluebuttonbn_joinURL' => $bigbluebuttonbn_joinURL), 'setting');
-    drupal_add_js(array('bigbluebuttonbn_view' => 'join'), 'setting');
+    //drupal_add_js(array('bigbluebuttonbn_pingURL' => $base_root.$base_path.'bigbluebuttonbn/ping/'.$meeting['meeting_id']), 'setting');
+    //drupal_add_js(array('bigbluebuttonbn_joinURL' => $bigbluebuttonbn_joinURL), 'setting');
+    //drupal_add_js(array('bigbluebuttonbn_view' => 'join'), 'setting');
 
     //Link this one to the right parameter
     drupal_add_js(array('bigbluebuttonbn_waitformoderator' => $meeting['wait_for_moderator']?'true':'false' ), 'setting');
@@ -685,109 +685,6 @@ function bigbluebuttonbn_recording_list() {
     return $build;
 
 }
-
-
-
-function bigbluebuttonbn_recordings_response_original($action, $meetingnameencoded = '', $format = 'drupal') {
-
-	debug($action);
-	
-    $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
-    $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
-    
-    global $base_path;
-    global $base_root;
-
-    if ( $meetingnameencoded != '' ){
-        $meetingnamedecoded = urldecode($meetingnameencoded);
-
-        if ( $format == 'json' ){
-
-            $meetings = bigbluebuttonbn_getAllMeetings();
-            $meetingIDs = '';
-            foreach( $meeting as $meetings ){
-                if( length($meetingIDs)) $meetingIDs .= ', ';
-                $meetingIDs .= $meeting['meeting_id'];
-            }
-
-            //Start building the content
-            drupal_add_http_header('Content-Type', 'application/json');
-            echo '{ "aaData": ['."\n";
-
-            if( $meetingIDs != '' ){
-                //Retrive all the recordings for the meetingID that starts with $meetingnameencoded
-                $recordings = BigBlueButtonBN::getRecordingsArray($meetingIDs, $URL, $SALT);
-                
-                if ( isset($recordings) )
-                
-                    foreach( $recordings as $recording ){
-                
-                    if ( in_array($recording['meetingID'], $meetings ) ){
-                
-                        if ( bigbluebuttonbn_ismoderator() || $recording['published'] == 'true' ) {
-                            $meta_description = isset($recording['meta_description'])?$recording['meta_description']:'';
-                            $actionbar = '';
-                            if ( bigbluebuttonbn_ismoderator() ) {
-                                $deleteURL = BigBlueButtonBN::deleteRecordingsURL($recording['recordID'], $URL, $SALT);
-                                if ( $recording['published'] == 'true' ){
-                                    $publishURL = BigBlueButtonBN::setPublishRecordingsURL($recording['recordID'], 'false', $URL, $SALT);
-                                    $actionbar = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/hide.gif' class='iconsmall' alt='Hide' onClick='bigbluebuttonbn_actionCall(\\\"".$publishURL."\\\")'   />";
-                                } else {
-                                    $publishURL = BigBlueButtonBN::setPublishRecordingsURL($recording['recordID'], 'true', $URL, $SALT);
-                                    $actionbar = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/show.gif' class='iconsmall' alt='Show' onClick='bigbluebuttonbn_actionCall(\\\"".$publishURL."\\\")'   />";
-                                }
-                                $actionbar = $actionbar."<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/delete.gif' class='iconsmall' alt='Delete' onClick='bigbluebuttonbn_actionCall(\\\"".$deleteURL."\\\",\\\"delete\\\")'   />";
-                            }
-                            $type = "<img src='".$base_path.drupal_get_path('module', 'bigbluebuttonbn')."/pix/".$recording['playback']['type'].".gif' alt='".$recording['playback']['type']."'>";
-                            echo '	["'.$type.'","<a href=\"'.$recording['playback']['url'].'\" target=\"_new\">'.$recording['meetingID'].'</a>","'.$meta_description.'","'.$recording['startTime'].'","'.$actionbar.'"],'."\n";
-                
-                        }
-                    }
-                
-                }
-                
-            }
-
-            echo '	["","","","",""]'."\n";
-            echo ']  }'."\n";
-
-        } else if ( $format == 'xml' ) {
-
-            drupal_add_http_header('Content-Type', 'application/xml');
-            $content = '<?xml version="1.0" encoding="ISO-8859-1"?>'."\n";
-            $content .= BigBlueButtonBN::_wrap_rawxml_load_file( BigBlueButtonBN::getRecordingsURL($meetingnameencoded, $URL, $SALT))."\n";
-            echo $content;
-        } else {
-
-            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/jquery.min.js');
-            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/dataTables.js');
-            drupal_add_js($base_root.$base_path.drupal_get_path('module', 'bigbluebuttonbn').'/js/recordings.js');
-
-            drupal_add_js(array('bigbluebuttonbn_view' => 'recordings'), 'setting');
-            drupal_add_js(array('bigbluebuttonbn_jsonURL' => $base_root.$base_path.'bigbluebuttonbn/recordings/'.$meetingnameencoded.'/json'), 'setting');
-            drupal_add_js(array('bigbluebuttonbn_ismoderator' => bigbluebuttonbn_ismoderator()?'true':'false' ), 'setting');
-
-            $output  = '    <center>'."\n";
-            $output .= '      <div id="dynamic"></div>'."\n";
-            $output .= '      <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">'."\n";
-            $output .= '        <thead>'."\n";
-            $output .= '        </thead>'."\n";
-            $output .= '        <tbody>'."\n";
-            $output .= '        </tbody>'."\n";
-            $output .= '        <tfoot>'."\n";
-            $output .= '        </tfoot>'."\n";
-            $output .= '      </table>'."\n";
-            $output .= '    </center>'."\n";
-
-            return $output;
-        }
-    } else {
-        return 'Error';
-    }
-
-}
-
-
 
 function bigbluebuttonbn_ismoderator(){
     $user = $GLOBALS['user'];
