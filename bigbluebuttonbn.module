@@ -267,6 +267,15 @@ function bigbluebuttonbn_menu() {
             'access arguments' => array('access bigbluebuttonbn recordings'),
     );
 
+    $items['bigbluebuttonbn/bbblogout'] = array(
+            'title'            => 'Ping',
+            'page callback'    => 'bigbluebuttonbn_bbblogout_response',
+            'page arguments'   => array(2),
+            'access callback'  => 'user_access',
+            'access arguments' => array('access content'),
+            'type'             => MENU_CALLBACK,
+    );
+    
 
     return $items;
 }  //  End of bigbluebuttonbn_menu().
@@ -383,7 +392,7 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
                     ),
             ),
     );
-    $form['bigbluebuttonbn_block_join_form']['submit'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_submit'] = array(
             '#type' => 'submit',
             '#value' => 'Join',
     );
@@ -393,7 +402,7 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
 
 //Create the form handler for block_join
 function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
-    $mid = $form_state['input']['bigbluebuttonbn_meeting_mid'];
+    $mid = $form_state['input']['bigbluebuttonbn_block_meeting_mid'];
     $meeting = bigbluebuttonbn_getMeeting($mid);
     
     $user = $GLOBALS['user'];
@@ -499,7 +508,7 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
 
 //Create the form handler for page_join
 function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
-    $mid = $form_state['input']['bigbluebuttonbn_meeting_mid'];
+    $mid = $form_state['input']['bigbluebuttonbn_page_meeting_mid'];
     $meeting = bigbluebuttonbn_getMeeting($mid);
     
     $user = $GLOBALS['user'];
@@ -584,6 +593,15 @@ function bigbluebuttonbn_ping_response($action, $meeting_id) {
     $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
     
+    drupal_add_http_header('Content-Type', 'application/xml');
+
+    echo BigBlueButtonBN::getMeetingXML( $meeting_id, $URL, $SALT );
+}
+
+function bigbluebuttonbn_bbblogout_response($action, $meeting_id) {
+    $URL = variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/');
+    $SALT = variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6');
+
     drupal_add_http_header('Content-Type', 'application/xml');
 
     echo BigBlueButtonBN::getMeetingXML( $meeting_id, $URL, $SALT );
