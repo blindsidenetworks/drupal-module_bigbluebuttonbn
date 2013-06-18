@@ -334,7 +334,7 @@ function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $meeting_i
     return confirm_form(
             $form,
             t('Are you sure you want to end %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            'admin/config/content/bigbluebuttonbn/meeting',
+            $_SERVER['HTTP_REFERER'],
             t('This action cannot be undone.'),
             t('End'),
             t('Cancel')

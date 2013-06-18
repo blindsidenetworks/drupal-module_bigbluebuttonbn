@@ -624,6 +624,7 @@ function bigbluebuttonbn_recording_list() {
     }
     
     // Loop through the meeting rooms and add them to the table.
+    $i = 0;
     foreach ($recordings as $recording) {
         /// Prepare playback recording links
         $type = '';
@@ -657,18 +658,19 @@ function bigbluebuttonbn_recording_list() {
         $formatedStartDate = gmdate("M d Y H:i:s", $recording['startTime']);
         //$formatedStartDate = date_i18n( "M d Y H:i:s", $recording['startTime'], false );
         
-        $rows[] = array(
+        $rows[$i] = array(
                 $type,
                 $recording['meetingName'],
                 $formatedStartDate,
                 $duration.' min'
         );
         if( user_access('publish bigbluebuttonbn recordings') ) {
-            array_push($rows[0], $publishLink);
+            array_push($rows[$i], $publishLink);
         }
         if( user_access('delete bigbluebuttonbn recordings') ) {
-            array_push($rows[0], $deleteLink);
+            array_push($rows[$i], $deleteLink);
         }
+        $i++;
         
         
     }
