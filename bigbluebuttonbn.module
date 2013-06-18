@@ -95,7 +95,6 @@ function bigbluebuttonbn_permission() {
 
 
 function bigbluebuttonbn_access($op, $node, $account) {
-
     if ($op == 'access') {
         return user_access('access bigbluebuttonbn meetings', $account);
     }
@@ -106,6 +105,14 @@ function bigbluebuttonbn_access($op, $node, $account) {
 
     if ($op == 'directaccess') {
         return user_access('directaccess bigbluebuttonbn meetings', $account);
+    }
+    
+}
+
+
+function bigbluebuttonbn_access_recordings($op, $node, $account) {
+    if ($op == 'access') {
+        return user_access('access bigbluebuttonbn recordings');
     }
     
 }
@@ -242,17 +249,16 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Join',
             'page callback'    => 'bigbluebuttonbn_join_response',
             'page arguments'   => array(2),
-            'access callback'  => 'bigbluebuttonbn_access',
             'access arguments' => array('access bigbluebuttonbn meetings'),
             'type'             => MENU_CALLBACK,
     );
     //  :Ends
     
     $items['bigbluebuttonbn/joinform'] = array(
-            'title'            => 'BigBlueButtonBN Form',
+            'title'            => 'BigBlueButtonBN',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_page_join_form'),
-            'access callback'  => 'bigbluebuttonbn_access',
+            //'access callback'  => 'bigbluebuttonbn_access',
             'access arguments' => array('access bigbluebuttonbn meetings'),
             //'type'             => MENU_SUGGESTED_ITEM,
             'type'             => MENU_NORMAL_ITEM,
@@ -262,7 +268,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'RecordingsBN',
             'page callback'    => 'bigbluebuttonbn_recordings_response',
             'page arguments'   => array(1),
-            'access callback'  => 'bigbluebuttonbn_access',
+            //'access callback'  => 'bigbluebuttonbn_access_recordings',
             'access arguments' => array('access bigbluebuttonbn meetings'),
     );
 
@@ -313,6 +319,15 @@ function bigbluebuttonbn_block_view($delta = '') {
 
 //Create the form for block_join
 function bigbluebuttonbn_block_join_form($form, &$form_state) {
+    if ( !user_access('access bigbluebuttonbn meetings') ){
+        $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_message'] = array(
+            '#type' => 'item',
+            '#title' => t('Access denied'),
+            '#suffix' => t('You are not authorized to access this block.'),
+        );
+        return $form;
+    }
+    
     //Set meeting rooms available at $meeting_options[
     $meetings = bigbluebuttonbn_getAllMeetings();
     foreach ( $meetings as $meeting )
@@ -331,28 +346,26 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
     $bigbluebuttonbn_password_disabled = FALSE;
     $bigbluebuttonbn_showPassword = 'true';
     
-    $roles = array_map('check_plain', user_roles(TRUE));
-    
     if ( user_access('directaccess bigbluebuttonbn meetings') ){
         $bigbluebuttonbn_password_disabled = TRUE;
         $bigbluebuttonbn_showPassword = 'false';
     }
-
+    
     //Form definition starts
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showName'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showName'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showName,
     );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_showPassword'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showPassword'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showPassword,
     );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_meeting_mid'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_meeting_mid'] = array(
             '#title' => t('Meeting'),
             '#type' => 'select',
             '#options' => $meeting_options,
     );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_name'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_name'] = array(
             '#type' => 'textfield',
             '#title' => t('Name'),
             '#default_value' => t($bigbluebuttonbn_name),
@@ -360,18 +373,18 @@ function bigbluebuttonbn_block_join_form($form, &$form_state) {
             '#size' => 15,
             '#states' => array(
                     'visible' => array(
-                            ':input[name="bigbluebuttonbn_showName"]' => array('value' => 'true')
+                            ':input[name="bigbluebuttonbn_block_showName"]' => array('value' => 'true')
                     ),
             ),
     );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_password'] = array(
+    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_password'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
             '#disabled' => $bigbluebuttonbn_password_disabled,
             '#size' => 15,
             '#states' => array(
                     'visible' => array(
-                            ':input[name="bigbluebuttonbn_showPassword"]' => array('value' => 'true')
+                            ':input[name="bigbluebuttonbn_block_showPassword"]' => array('value' => 'true')
                     ),
             ),
     );
@@ -392,7 +405,7 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
     if ( $user->uid != 0 ) // is not anonymous user
         $meeting['user_name'] = $user->name;
     else
-        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
+        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_block_name'];
 
     //get meeting info
     if ( user_access('directaccess bigbluebuttonbn meetings') ) {
@@ -402,7 +415,7 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
             $meeting['user_password'] = $meeting['attendee_pass'];
         }
     } else {
-        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
+        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_block_password'];
     }
     
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
@@ -437,27 +450,27 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
 
     $bigbluebuttonbn_password_disabled = FALSE;
     $bigbluebuttonbn_showPassword = 'true';
+    
     if ( user_access('directaccess bigbluebuttonbn meetings') ){
         $bigbluebuttonbn_password_disabled = TRUE;
         $bigbluebuttonbn_showPassword = 'false';
     }
     
-    
     //Form definition starts
-    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showName'] = array(
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_page_showName'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showName,
     );
-    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_showPassword'] = array(
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_page_showPassword'] = array(
             '#type' => 'hidden',
             '#value' => $bigbluebuttonbn_showPassword,
     );
-    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_meeting_mid'] = array(
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_page_meeting_mid'] = array(
             '#title' => t('Meeting'),
             '#type' => 'select',
             '#options' => $meeting_options,
     );
-    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_name'] = array(
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_page_name'] = array(
             '#type' => 'textfield',
             '#title' => t('Name'),
             '#default_value' => t($bigbluebuttonbn_name),
@@ -465,18 +478,18 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
             '#size' => 15,
             '#states' => array(
                     'visible' => array(
-                            ':input[name="bigbluebuttonbn_showName"]' => array('value' => 'true')
+                            ':input[name="bigbluebuttonbn_page_showName"]' => array('value' => 'true')
                     ),
             ),
     );
-    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_password'] = array(
+    $form['bigbluebuttonbn_page_join_form']['bigbluebuttonbn_page_password'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
             '#disabled' => $bigbluebuttonbn_password_disabled,
             '#size' => 15,
             '#states' => array(
                     'visible' => array(
-                            ':input[name="bigbluebuttonbn_showPassword"]' => array('value' => 'true')
+                            ':input[name="bigbluebuttonbn_page_showPassword"]' => array('value' => 'true')
                     ),
             ),
     );
@@ -484,8 +497,9 @@ function bigbluebuttonbn_page_join_form($form, &$form_state) {
             '#type' => 'submit',
             '#value' => 'Join',
     );
-
+    
     return $form;
+    
 }
 
 //Create the form handler for page_join
@@ -497,7 +511,7 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
     if ( $user->uid != 0 ) // is not anonymous user
         $meeting['user_name'] = $user->name;
     else
-        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_name'];
+        $meeting['user_name'] = $form_state['input']['bigbluebuttonbn_page_name'];
 
     //get meeting info
     if ( user_access('directaccess bigbluebuttonbn meetings') ) {
@@ -507,7 +521,7 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
             $meeting['user_password'] = $meeting['attendee_pass'];
         }
     } else {
-        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_password'];
+        $meeting['user_password'] = $form_state['input']['bigbluebuttonbn_page_password'];
     }
 
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
