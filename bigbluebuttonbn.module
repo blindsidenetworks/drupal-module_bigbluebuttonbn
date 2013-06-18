@@ -76,7 +76,7 @@ function bigbluebuttonbn_permission() {
             ),
             'moderate bigbluebuttonbn meetings' => array(
                     'title' => t('Join as moderator'),
-                    'description' => t('Allow users to access meeting rooms as moderator'),
+                    'description' => t('Allow users to access meeting rooms as moderator when \'No password required\' has been granted'),
             ),
             'directaccess bigbluebuttonbn meetings' => array(
                     'title' => t('No password required'),
@@ -242,8 +242,8 @@ function bigbluebuttonbn_menu() {
             'title'            => 'Join',
             'page callback'    => 'bigbluebuttonbn_join_response',
             'page arguments'   => array(2),
-            'access callback'  => 'user_access',
-            'access arguments' => array('access content'),
+            'access callback'  => 'bigbluebuttonbn_access',
+            'access arguments' => array('access bigbluebuttonbn meetings'),
             'type'             => MENU_CALLBACK,
     );
     //  :Ends
@@ -252,7 +252,7 @@ function bigbluebuttonbn_menu() {
             'title'            => 'BigBlueButtonBN Form',
             'page callback'    => 'drupal_get_form',
             'page arguments'   => array('bigbluebuttonbn_page_join_form'),
-            'access callback'  => 'user_access',
+            'access callback'  => 'bigbluebuttonbn_access',
             'access arguments' => array('access bigbluebuttonbn meetings'),
             //'type'             => MENU_SUGGESTED_ITEM,
             'type'             => MENU_NORMAL_ITEM,
@@ -262,8 +262,8 @@ function bigbluebuttonbn_menu() {
             'title'            => 'RecordingsBN',
             'page callback'    => 'bigbluebuttonbn_recordings_response',
             'page arguments'   => array(1),
-            'access callback'  => 'user_access',
-            'access arguments' => array('access content'),
+            'access callback'  => 'bigbluebuttonbn_access',
+            'access arguments' => array('access bigbluebuttonbn meetings'),
     );
 
 
@@ -408,9 +408,11 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
 	if ( $bbb_joinURL != NULL ){
 	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
-            $form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+            //$form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+            drupal_goto("bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL));
         } else {
-		    $form_state['redirect'] = $bbb_joinURL;
+		    //$form_state['redirect'] = $bbb_joinURL;
+		    drupal_goto($bbb_joinURL);
         }
 	}
     
@@ -511,9 +513,11 @@ function bigbluebuttonbn_page_join_form_submit($form, &$form_state) {
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
 	if ( $bbb_joinURL != NULL ){
 	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
-            $form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+            //$form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
+            drupal_goto("bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL));
         } else {
-		    $form_state['redirect'] = $bbb_joinURL;
+		    //$form_state['redirect'] = $bbb_joinURL;
+		    drupal_goto($bbb_joinURL);
         }
 	}
     
