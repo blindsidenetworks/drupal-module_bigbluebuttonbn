@@ -6,7 +6,7 @@ Author: Blindside Networks
 Author URI: http://blindsidenetworks.com/
 Description: BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebutton.org/support
 
-Copyright 2011 Blindside Networks
+Copyright 2011-2013 Blindside Networks
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

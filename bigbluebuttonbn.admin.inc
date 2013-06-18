@@ -6,7 +6,7 @@ Author: Blindside Networks
 Author URI: http://blindsidenetworks.com/
 Description: BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebutton.org/support
 
-Copyright 2011 Blindside Networks
+Copyright 2011-2013 Blindside Networks
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -381,8 +381,6 @@ function bigbluebuttonbn_admin_meeting_end_form_submit($form, &$form_state) {
 
 function bigbluebuttonbn_admin_meeting_join($form, &$form_state) {
     
-    //debug($form_state, "form_state", $print_r = TRUE);
-    
     $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
 
     $user = $GLOBALS['user'];
@@ -433,7 +431,6 @@ function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meet
  * @see contact_category_delete_form()
  */
 function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state) {
-    //debug($form_state, "form_state", $print_r = TRUE);
     
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
@@ -444,10 +441,6 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
     drupal_set_message(t('Recording selected has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
 
     header('Location: '.$_SERVER['HTTP_REFERER'] );
-    //$form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/recording';
-    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
-    
 }
 
 
@@ -456,8 +449,7 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
  *
  */
 function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
-    //debug($form_state, "form_state", $print_r = TRUE);
-
+    
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
 
@@ -467,8 +459,6 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
     drupal_set_message(t('Recording selected has been published.'));
 
     header('Location: '.$_SERVER['HTTP_REFERER'] );
-    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
 }
 
 /**
@@ -476,8 +466,7 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
  *
  */
 function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
-    //debug($form_state, "form_state", $print_r = TRUE);
-
+    
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
 
@@ -487,198 +476,6 @@ function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
     drupal_set_message(t('Recording selected has been unpublished.'));
 
     header('Location: '.$_SERVER['HTTP_REFERER'] );
-    //header('Location: ./?q=admin/config/content/bigbluebuttonbn/recording' );
-    //drupal_goto('admin/config/content/bigbluebuttonbn/recording');
-    
-}
-
-
-function bigbluebuttonbn_joinMeeting($meeting){
-    //---------------------------------------------------JOIN-----------------------------------------------
-    $bbb_joinURL = NULL;
-
-    $meetingID = $meeting['meeting_id'];
-    $meetingName = $meeting['meeting_name'];
-    $moderatorPW = $meeting['moderator_pass'];
-    $attendeePW = $meeting['attendee_pass'];
-    $welcome = $meeting['welcome'];
-    $welcome = (( !isset($meeting['welcome']) || $meeting['welcome'] == '')? "Welcome to [$meetingName] Meeting Room.": $meeting['welcome'])."<br>";
-    $record = $meeting['record'] == 1? 'true': 'false';
-    $welcome .= $record == 'true'? "<br><b>This meeting is being recorded.</b><br>": '';
-    $duration = $meeting['duration'];
-    $welcome .= $duration > 0? "<br><b>The maximum duration for this meeting is ".$duration." minutes.</b><br>": '';
-    $description = $meeting['description'];
-    
-    $URL = variable_get('bigbluebuttonbn_server_url', '');
-    $SALT = variable_get('bigbluebuttonbn_server_salt', '');
-    $logoutURL = $GLOBALS['base_url'];
-
-    $user_name = $meeting['user_name'];
-    $user_password = $meeting['user_password'];
-    
-    //Validate the password
-    if ( $user_password != $moderatorPW && $user_password != $attendeePW ) {
-        drupal_set_message(t("The password typed doesn't match neither the attendee password nor the moderator password registered."));
-
-    } else {
-        //Calls create meeting on the bigbluebutton server
-        if ( !BigBlueButtonBN::isMeetingCreated( $meetingID, $URL, $SALT ) ){
-            $response = BigBlueButtonBN::createMeetingArray($meetingName, $meetingID, $attendeePW, $moderatorPW,  $URL, $SALT, $logoutURL, $welcome, $record, $duration, 0, array("meta_description" => $description, "meta_email" => '') );
-
-            //Analyzes the bigbluebutton server's response
-            if(!$response){//If the server is unreachable, then prompts the user of the necessary action
-                drupal_set_message(t('Unable to join the meeting room %meeting_name. Please check the url of the bigbluebutton server AND check to see if the bigbluebutton server is running.', array('%meeting_name' => $meeting['meeting_name'])));
-                return;
-            } else if( $response['returncode'] == 'FAILED' ) { //The meeting was not created
-                if($response['messageKey'] == 'checksumError'){
-                    drupal_set_message(t('A checksum error occured. Make sure you entered the correct salt.'));
-                } else {
-                    drupal_set_message(t($response['message']));
-                }
-                return;
-            } else {
-                if( !isset($response['messageKey']) || $response['messageKey'] == '' ){
-                    // The meeting was just created, insert the create event to the log
-                    db_insert('bigbluebuttonbn_logs')
-                    ->fields(array(
-                            'meeting_id' => $meetingID,
-                            'record' => $record? 1: 0,
-                            'timestamp' => time(),
-                            'event' => 'Create',
-                    ))
-                    ->execute();
-                }
-                
-                $bbb_joinURL = BigBlueButtonBN::joinURL($meetingID, $user_name, $user_password, $URL, $SALT, $logoutURL );
-            }
-        } else  {
-            $bbb_joinURL = BigBlueButtonBN::joinURL($meetingID, $user_name, $user_password, $URL, $SALT, $logoutURL );
-        }
-    }
-    //---------------------------------------------------END-------------------------------------------------
-    return $bbb_joinURL;
-}
-
-
-function bigbluebuttonbn_getMeeting($mid = NULL) {
-
-    $meeting = array(
-            'mid' => '',
-            'meeting_id' => '',
-            'meeting_name' => '',
-            'attendee_pass' => '',
-            'moderator_pass' => '',
-            'wait_for_moderator' => 0,
-            'newwindow' => 0,
-            'record' => 0,
-            'duration' => 0,
-            'description' => '',
-            'welcome' => '',
-    );
-    
-    if ( $mid != NULL ) {
-        $results = db_select('bigbluebuttonbn', 'm')
-        ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
-        ->condition('mid', $mid, '=')
-        ->orderBy('meeting_name')
-        ->execute()
-        ->fetchAll();
-
-        if ( $results != NULL ) {
-            $meeting = array(
-                    'mid' => $results[0]->mid,
-                    'meeting_id' => $results[0]->meeting_id,
-                    'meeting_name' => $results[0]->meeting_name,
-                    'attendee_pass' => $results[0]->attendee_pass,
-                    'moderator_pass' => $results[0]->moderator_pass,
-                    'wait_for_moderator' => $results[0]->wait_for_moderator,
-                    'newwindow' => $results[0]->newwindow,
-                    'record' => $results[0]->record,
-                    'duration' => $results[0]->duration,
-                    'description' => $results[0]->description,
-                    'welcome' => $results[0]->welcome,
-            );
-        }
-    }
-
-    return $meeting;
-
-}
-
-
-function bigbluebuttonbn_getAllMeetings() {
-
-    $results = db_select('bigbluebuttonbn', 'm')
-    ->fields('m', array('mid', 'meeting_id', 'meeting_name', 'attendee_pass', 'moderator_pass', 'wait_for_moderator', 'newwindow', 'record', 'duration', 'description', 'welcome'))
-    ->orderBy('meeting_name')
-    ->execute()
-    ->fetchAll();
-
-    foreach( $results as $rowset ) {
-        $meetings_[$rowset->mid] = array(
-                'mid' => $rowset->mid,
-                'meeting_id' => $rowset->meeting_id,
-                'meeting_name' => $rowset->meeting_name,
-                'attendee_pass' => $rowset->attendee_pass,
-                'moderator_pass' => $rowset->moderator_pass,
-                'wait_for_moderator' => $rowset->wait_for_moderator,
-                'newwindow' => $rowset->newwindow,
-                'record' => $rowset->record,
-                'duration' => $rowset->duration,
-                'description' => $rowset->description,
-                'welcome' => $rowset->welcome,
-        );
-    }
-
-    return $meetings_;
-}
-
-function bigbluebuttonbn_getAllRecordings() {
-
-    $URL = variable_get('bigbluebuttonbn_server_url', '');
-    $SALT = variable_get('bigbluebuttonbn_server_salt', '');
-    
-    $results = db_select('bigbluebuttonbn_logs', 'm')
-        ->fields('m', array('id', 'meeting_id', 'record', 'timestamp', 'event'))
-        ->distinct()
-        ->condition('event', 'Create', '=')
-        ->condition('record', 1, '=')
-        ->orderBy('timestamp')
-        ->execute()
-        ->fetchAll();
-
-    $meetingIds = '';
-    foreach( $results as $rowset ) {
-        if ( strlen($meetingIds) > 0 ) $meetingIds .= ',';
-        $meetingIds .= $rowset->meeting_id;
-    }
-    if( $meetingIds != '')
-        $recordings = BigBlueButtonBN::getRecordingsArray($meetingIds, $URL, $SALT);
-    else
-        $recordings = array();
-
-    return $recordings;
-}
-
-/***
- * Any other bigbluebuttonbn functions go here.  Each of them must have a name that
-* starts with bigbluebuttonbn_
-* Remember (see note in first lines) that, if this section grows, it's HIGHLY
-* recommended to move all funcions below to a new "localib.php" file.
-**
-*  Function taken from http://www.php.net/manual/en/function.mt-rand.php
-*  modified by Sebastian Schneider
-*  credits go to www.mrnaz.com
-*/
-function bigbluebuttonbn_rand_string($len, $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
-{
-    $string = '';
-    for ($i = 0; $i < $len; $i++)
-    {
-        $pos = rand(0, strlen($chars)-1);
-        $string .= $chars{$pos};
-    }
-    return (sha1($string));
 }
 
 ?>
