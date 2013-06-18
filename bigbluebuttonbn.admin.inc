@@ -104,14 +104,12 @@ function bigbluebuttonbn_admin_meeting_form($form, &$form_state, $op = 'add', $m
             '#description'   => t('Checking this box it will be required a moderator in the meeting in order to allow attendees get into.'),
   		);
 
-    /*
     $form['newwindow'] = array(
             '#type' => 'checkbox',
             '#title' => t('Open meeting in a new window.'),
             '#default_value' => $meeting['newwindow'],
             '#description'   => t('Checking this box it will open a new window to join meetings.'),
   		);
-    */
     
     $form['record'] = array(
             '#type' => 'checkbox',
