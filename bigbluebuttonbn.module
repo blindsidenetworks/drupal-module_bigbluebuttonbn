@@ -268,15 +268,23 @@ function bigbluebuttonbn_menu() {
     );
 
     $items['bigbluebuttonbn/bbblogout'] = array(
-            'title'            => 'Ping',
+            'title'            => 'BBB Logout',
             'page callback'    => 'bigbluebuttonbn_bbblogout_response',
             'page arguments'   => array(2),
-            'access callback'  => 'user_access',
+            //'access callback'  => 'user_access',
             'access arguments' => array('access content'),
-            'type'             => MENU_CALLBACK,
+            //'type'             => MENU_CALLBACK,
     );
     
-
+    $items['bigbluebuttonbn/test'] = array(
+            'title'            => 'Test',
+            'page callback'    => 'bigbluebuttonbn_test_response',
+            'page arguments'   => array(2),
+            //'access callback'  => 'user_access',
+            'access arguments' => array('access content'),
+            //'type'             => MENU_NORMAL_ITEM,
+    );
+    
     return $items;
 }  //  End of bigbluebuttonbn_menu().
 
@@ -323,79 +331,103 @@ function bigbluebuttonbn_block_view($delta = '') {
 
 //Create the form for block_join
 function bigbluebuttonbn_block_join_form($form, &$form_state) {
+    
     if ( !user_access('access bigbluebuttonbn meetings') ){
         $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_message'] = array(
             '#type' => 'item',
             '#title' => t('Access denied'),
             '#suffix' => t('You are not authorized to access this block.'),
         );
-        return $form;
-    }
-    
-    //Set meeting rooms available at $meeting_options[
-    $meetings = bigbluebuttonbn_getAllMeetings();
-    foreach ( $meetings as $meeting )
-        $meeting_options[$meeting['mid']] = $meeting['meeting_name'];
-
-    $user = $GLOBALS['user'];
-    $bigbluebuttonbn_name = "";
-    $bigbluebuttonbn_name_disabled = FALSE;
-    $bigbluebuttonbn_showName = 'true';
-    if ( $user->uid != 0 ){ // is not anonymous user
-        $bigbluebuttonbn_name = $user->name;
-        $bigbluebuttonbn_name_disabled = TRUE;
-        $bigbluebuttonbn_showName = 'false';
-    }
-
-    $bigbluebuttonbn_password_disabled = FALSE;
-    $bigbluebuttonbn_showPassword = 'true';
-    
-    if ( user_access('directaccess bigbluebuttonbn meetings') ){
-        $bigbluebuttonbn_password_disabled = TRUE;
-        $bigbluebuttonbn_showPassword = 'false';
-    }
-    
-    //Form definition starts
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showName'] = array(
-            '#type' => 'hidden',
-            '#value' => $bigbluebuttonbn_showName,
-    );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showPassword'] = array(
-            '#type' => 'hidden',
-            '#value' => $bigbluebuttonbn_showPassword,
-    );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_meeting_mid'] = array(
-            '#title' => t('Meeting'),
-            '#type' => 'select',
-            '#options' => $meeting_options,
-    );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_name'] = array(
-            '#type' => 'textfield',
-            '#title' => t('Name'),
-            '#default_value' => t($bigbluebuttonbn_name),
-            '#disabled' => $bigbluebuttonbn_name_disabled,
-            '#size' => 15,
-            '#states' => array(
-                    'visible' => array(
-                            ':input[name="bigbluebuttonbn_block_showName"]' => array('value' => 'true')
+        
+    } else {
+        if ( isset($form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_newwindow']) ){
+            if ( $form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_newwindow'] ) {
+                
+                //drupal_add_js('jQuery(document).ready(function () { window.location.assign("'.$form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_joinURL'].'"); });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+                drupal_add_js('jQuery(document).ready(function () { window.open(\''.$form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_joinURL'].'\', \'_blank\'); });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+                //drupal_add_js('jQuery(document).ready(function () { alert("Hello!"); });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+            
+            } else {
+                drupal_goto($form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_joinURL']);
+            }
+            
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_message'] = array(
+                    '#type' => 'item',
+                    '#title' => t('Join'),
+                    '#suffix' => t('You are in the meeting now.'),
+            );
+            
+        } else {
+            //Set meeting rooms available at $meeting_options[
+            $meetings = bigbluebuttonbn_getAllMeetings();
+            foreach ( $meetings as $meeting )
+                $meeting_options[$meeting['mid']] = $meeting['meeting_name'];
+            
+            $user = $GLOBALS['user'];
+            $bigbluebuttonbn_name = "";
+            $bigbluebuttonbn_name_disabled = FALSE;
+            $bigbluebuttonbn_showName = 'true';
+            if ( $user->uid != 0 ){ // is not anonymous user
+                $bigbluebuttonbn_name = $user->name;
+                $bigbluebuttonbn_name_disabled = TRUE;
+                $bigbluebuttonbn_showName = 'false';
+            }
+            
+            $bigbluebuttonbn_password_disabled = FALSE;
+            $bigbluebuttonbn_showPassword = 'true';
+            
+            if ( user_access('directaccess bigbluebuttonbn meetings') ){
+                $bigbluebuttonbn_password_disabled = TRUE;
+                $bigbluebuttonbn_showPassword = 'false';
+            }
+            
+            //Form definition starts
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showName'] = array(
+                    '#type' => 'hidden',
+                    '#value' => $bigbluebuttonbn_showName,
+            );
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_showPassword'] = array(
+                    '#type' => 'hidden',
+                    '#value' => $bigbluebuttonbn_showPassword,
+            );
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_meeting_mid'] = array(
+                    '#title' => t('Meeting'),
+                    '#type' => 'select',
+                    '#options' => $meeting_options,
+            );
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_name'] = array(
+                    '#type' => 'textfield',
+                    '#title' => t('Name'),
+                    '#default_value' => t($bigbluebuttonbn_name),
+                    '#disabled' => $bigbluebuttonbn_name_disabled,
+                    '#size' => 15,
+                    '#states' => array(
+                            'visible' => array(
+                                    ':input[name="bigbluebuttonbn_block_showName"]' => array('value' => 'true')
+                            ),
                     ),
-            ),
-    );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_password'] = array(
-            '#type' => 'password',
-            '#title' => t('Password'),
-            '#disabled' => $bigbluebuttonbn_password_disabled,
-            '#size' => 15,
-            '#states' => array(
-                    'visible' => array(
-                            ':input[name="bigbluebuttonbn_block_showPassword"]' => array('value' => 'true')
+            );
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_password'] = array(
+                    '#type' => 'password',
+                    '#title' => t('Password'),
+                    '#disabled' => $bigbluebuttonbn_password_disabled,
+                    '#size' => 15,
+                    '#states' => array(
+                            'visible' => array(
+                                    ':input[name="bigbluebuttonbn_block_showPassword"]' => array('value' => 'true')
+                            ),
                     ),
-            ),
-    );
-    $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_submit'] = array(
-            '#type' => 'submit',
-            '#value' => 'Join',
-    );
+            );
+            $form['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_submit'] = array(
+                    '#type' => 'submit',
+                    '#value' => 'Join',
+            );
+            
+            //$form['#attributes'] = array('OnSubmit' => 'alert("Hello");');
+            
+        }
+        
+    }
 
     return $form;
 }
@@ -425,11 +457,29 @@ function bigbluebuttonbn_block_join_form_submit($form, &$form_state) {
     $bbb_joinURL = bigbluebuttonbn_joinMeeting($meeting);
 	if ( $bbb_joinURL != NULL ){
 	    if ( $meeting['user_password'] == $meeting['attendee_pass'] && $meeting['wait_for_moderator'] == 1 ){
-            //$form_state['redirect'] = "bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL);
             drupal_goto("bigbluebuttonbn/join/".$mid."/".urlencode($bbb_joinURL));
         } else {
-		    //$form_state['redirect'] = $bbb_joinURL;
-		    drupal_goto($bbb_joinURL);
+            $form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_newwindow'] = $meeting['newwindow'];
+            $form_state['bigbluebuttonbn_block_join_form']['bigbluebuttonbn_block_joinURL'] = $bbb_joinURL;
+            $form_state['rebuild'] = TRUE;
+
+            /*
+            if ( $meeting['newwindow'] ) {
+                
+                //debug("Hellolo");
+                //$output = "";
+                //drupal_add_js('jQuery(document).ready(function () { alert("Hello!"); });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+                
+                
+                
+		        //drupal_goto($bbb_joinURL);
+                //echo '<script type="text/javascript">window.location = "'.$bbb_joinURL.'";</script>';
+                //drupal_add_js(array('bigbluebuttonbn_newwindow' => $meeting['newwindow']?'true':'false' ), 'setting');
+                
+            } else {
+                drupal_goto($bbb_joinURL);
+            }
+            */
         }
 	}
     
@@ -567,8 +617,14 @@ function bigbluebuttonbn_join_response($action, $mid, $joinURL) {
                 dataType : "xml",
                 success : function(xmlDoc){
                     $xml = jQuery( xmlDoc ), $running = $xml.find( "running" );
-                    if($running.text() == "true"){
-                        window.location = "'.$bigbluebuttonbn_joinURL.'";
+                    if($running.text() == "true"){';
+    if($meeting['newwindow'])
+        $output .= '
+                        window.open("'.$bigbluebuttonbn_joinURL.'");';
+    else
+        $output .= '
+                        window.location = "'.$bigbluebuttonbn_joinURL.'";';
+    $output .= '
                     }
                 },
                 error : function(xmlHttpRequest, status, error) {
@@ -605,6 +661,16 @@ function bigbluebuttonbn_bbblogout_response($action, $meeting_id) {
     drupal_add_http_header('Content-Type', 'application/xml');
 
     echo BigBlueButtonBN::getMeetingXML( $meeting_id, $URL, $SALT );
+}
+
+function bigbluebuttonbn_test_response($action, $format = 'html') {
+    $output = "";
+    
+    drupal_add_js('jQuery(document).ready(function () { alert("Hello!"); });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 5));
+    
+    $output .= "Bye Bye";
+    
+    return $output;
 }
 
 function bigbluebuttonbn_recordings_response($action, $format = 'html') {
