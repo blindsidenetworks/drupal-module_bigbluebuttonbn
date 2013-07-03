@@ -44,7 +44,7 @@ function bigbluebuttonbn_admin_settings() {
     $form['bigbluebuttonbn_server_url'] = array(
             '#type' => 'textfield',
             '#title' => t('URL of BigBlueButton server'),
-            '#description' => t('Enter the URL to access the BigBlueButton server, eg. "http://example.com/bigbluebutton/"'),
+            '#description' => t('Enter the BigBlueButton server URL, eg. "http://test-install.blindsidenetworks.com/bigbluebutton/"'),
             '#default_value' => variable_get('bigbluebuttonbn_server_url', 'http://test-install.blindsidenetworks.com/bigbluebutton/'),
             '#size' => 45
     );
@@ -52,7 +52,7 @@ function bigbluebuttonbn_admin_settings() {
     $form['bigbluebuttonbn_server_salt'] = array(
             '#type' => 'textfield',
             '#title' => t('Salt of BigBlueButton server'),
-            '#description' => t('Enter the Salt of the BigBlueButton server. It can be found in /var/lib/tomcat6/webapps/bigbluebutton/WEB-INF/classes/bigbluebutton.properties'),
+            '#description' => t('Enter the BigBlueButton server Shared Secret. eg. "8cd8ef52e8e101574e400365b55e11a6"'),
             '#default_value' => variable_get('bigbluebuttonbn_server_salt', '8cd8ef52e8e101574e400365b55e11a6'),
             '#size' => 45
     );
