@@ -274,9 +274,9 @@ function bigbluebuttonbn_admin_meeting_list() {
  * Form builder for deleting a Meeting room.
  *
  */
-function bigbluebuttonbn_admin_meeting_delete_form($form, &$form_state,  $meeting_id = NULL) {
+function bigbluebuttonbn_admin_meeting_delete_form($form, &$form_state,  $mid = 0) {
 
-    $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
+    $meeting = bigbluebuttonbn_getMeeting($mid);
 
     $form['meeting_name'] = array(
             '#type' => 'value',
@@ -314,9 +314,9 @@ function bigbluebuttonbn_admin_meeting_delete_form_submit($form, &$form_state) {
  * Form builder for ending a Meeting that is running.
  *
  */
-function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $meeting_id = NULL) {
+function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $mid = 0) {
 
-    $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
+    $meeting = bigbluebuttonbn_getMeeting($mid);
     
     $form['meeting_id'] = array(
             '#type' => 'value',
@@ -335,7 +335,7 @@ function bigbluebuttonbn_admin_meeting_end_form($form, &$form_state,  $meeting_i
             $form,
             t('Are you sure you want to end %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
             $_SERVER['HTTP_REFERER'],
-            t('This action cannot be undone.'),
+            t('The meeting room will close and all users will be kicked out.'),
             t('End'),
             t('Cancel')
     );
@@ -377,9 +377,9 @@ function bigbluebuttonbn_admin_meeting_end_form_submit($form, &$form_state) {
 
 }
 
-function bigbluebuttonbn_admin_meeting_join($form, &$form_state) {
+function bigbluebuttonbn_admin_meeting_join($form, &$form_state, $mid) {
     
-    $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
+    $meeting = bigbluebuttonbn_getMeeting($mid);
 
     $user = $GLOBALS['user'];
     $meeting['user_name'] = $user->name;
