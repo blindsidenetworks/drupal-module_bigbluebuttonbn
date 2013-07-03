@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: BigBlueButtonBN
-Plugin URI: http://blindsidenetworks.com/integration
-Author: Blindside Networks
-Author URI: http://blindsidenetworks.com/
-Description: BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebutton.org/support
+Plugin Name:   BigBlueButtonBN
+Plugin URI:    http://blindsidenetworks.com/integration
+Author:        Blindside Networks
+Author URI:    http://www.blindsidenetworks.com/
+Description:   BigBlueButton is an open source web conferencing system. This module integrates BigBlueButton into Drupal allowing website administrators to create and manage meetings rooms that can be used by visitors and registred users. For more information on setting up your own BigBlueButton server or for using an external hosting provider visit http://bigbluebutton.org/support
 
 Copyright 2011-2013 Blindside Networks
 
@@ -404,19 +404,13 @@ function bigbluebuttonbn_admin_recording_list() {
  * Form builder for deleting a Recording from the BigBlueButton server.
  *
  */
-function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meeting_id = NULL) {
+function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $recordingID = NULL, $meetingName = '' ) {
 
-    $meeting = bigbluebuttonbn_getMeeting($form_state['build_info']['args'][0]);
-
-    $form['meeting_name'] = array(
-            '#type' => 'value',
-            '#value' => $meeting['meeting_name'],
- 		 );
-
+    $form['recording_id'] = array('#type' => 'value', '#value' => $recordingID );
     return confirm_form(
             $form,
-            t('Are you sure you want to delete %meeting_name?', array('%meeting_name' => $meeting['meeting_name'])),
-            $_SERVER['HTTP_REFERER'],
+            t('Are you sure you want to delete this recording for meeting "%meeting_name"?', array('%meeting_name' => $meetingName) ),
+            'admin/config/content/bigbluebuttonbn/meeting',
             t('This action cannot be undone.'),
             t('Delete'),
             t('Cancel')
@@ -429,16 +423,17 @@ function bigbluebuttonbn_admin_recording_delete_form($form, &$form_state,  $meet
  * @see contact_category_delete_form()
  */
 function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state) {
+    //debug($form_state['values']);
     
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
     
-    $recordID = $form_state['build_info']['args'][0];
-    BigBluebuttonBN::deleteRecordings($recordID, $URL, $SALT);
+    BigBluebuttonBN::deleteRecordings($form_state['values']['recording_id'], $URL, $SALT);
 
-    drupal_set_message(t('Recording selected has been deleted.', array('%meeting_name' => $form_state['values']['meeting_name'])));
+    drupal_set_message(t('The recording selected has been deleted.'));
 
-    header('Location: '.$_SERVER['HTTP_REFERER'] );
+    $form_state['redirect'] = 'admin/config/content/bigbluebuttonbn/recording';
+    
 }
 
 
@@ -446,15 +441,14 @@ function bigbluebuttonbn_admin_recording_delete_form_submit($form, &$form_state)
  * Handler for publish Recording.
  *
  */
-function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
+function bigbluebuttonbn_admin_recording_show($form, &$form_state,  $recordingID = NULL) {
     
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
 
-    $recordID = $form_state['build_info']['args'][0];
-    BigBluebuttonBN::publishRecordings($recordID, 'true', $URL, $SALT);
+    BigBluebuttonBN::publishRecordings($recordingID, 'true', $URL, $SALT);
 
-    drupal_set_message(t('Recording selected has been published.'));
+    drupal_set_message(t('The recording selected has been published.'));
 
     header('Location: '.$_SERVER['HTTP_REFERER'] );
 }
@@ -463,15 +457,14 @@ function bigbluebuttonbn_admin_recording_show($form, &$form_state) {
  * Handler for unpublish Recording.
  *
  */
-function bigbluebuttonbn_admin_recording_hide($form, &$form_state) {
+function bigbluebuttonbn_admin_recording_hide($form, &$form_state,  $recordingID = NULL) {
     
     $URL = variable_get('bigbluebuttonbn_server_url', '');
     $SALT = variable_get('bigbluebuttonbn_server_salt', '');
 
-    $recordID = $form_state['build_info']['args'][0];
-    BigBluebuttonBN::publishRecordings($recordID, 'false', $URL, $SALT);
+    BigBluebuttonBN::publishRecordings($recordingID, 'false', $URL, $SALT);
     
-    drupal_set_message(t('Recording selected has been unpublished.'));
+    drupal_set_message(t('The recording selected has been unpublished.'));
 
     header('Location: '.$_SERVER['HTTP_REFERER'] );
 }

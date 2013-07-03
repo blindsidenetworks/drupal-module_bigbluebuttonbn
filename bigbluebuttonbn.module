@@ -654,7 +654,7 @@ function bigbluebuttonbn_recording_list() {
         $bloginfourl = '.';
         $action = ($recording['published'] == 'true')? 'Hide': 'Show';
         $publishLink = l(t($action), 'admin/config/content/bigbluebuttonbn/recording/'.strtolower($action).'/'. $recording['recordID']);
-        $deleteLink = l(t('Delete'), 'admin/config/content/bigbluebuttonbn/recording/delete/'.$recording['recordID']);
+        $deleteLink = l(t('Delete'), 'admin/config/content/bigbluebuttonbn/recording/delete/'.$recording['recordID'].'/'.$recording['meetingName']);
         
         /// Prepare duration
         $endTime = isset($recording['endTime'])? intval(str_replace('"', '\"', $recording['endTime'])):0;
